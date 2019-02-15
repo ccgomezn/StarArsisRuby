@@ -26,12 +26,32 @@ class IndexController < ApplicationController
   	id_socio = params[:socio]
   	data_doc = params[:document]
     formato = FormatoDocumento.find(id_socio)
+    data_no_subida = []
     for i in 0..(formato.fila_inicial-1)
       data_doc.delete(0)
     end
-
+    nombre_reporte = params[:nombre] + " ( " + params[:fecha] + " ) "
+    reporte = Reporte.create(Id_reporte: nil,Doc_reporte:params[:document_blob], Estado_pago: 0, Fecha: params[:fecha], Id_socio: id_socio, Id_tipo_aparicion: params[:tipo_aparicion], Nombre_reporte: nombre_reporte,Comentario: params[:comentario])
+    reporte = Reporte.last
     data_doc.each do |row|
-      id_obra = Obra.find_by(nombre_obra: row[formato.nombre_obra])
+      if(params[:tipo_aparicion].to_i === 1)
+        id_obra = Obra.find_by(nombre_obra: row[formato.nombre_obra])
+        if(id_obra == nil)
+          wordDic = Diccionario.find_by(nombre_obra: row[formato.nombre_obra])
+          if(wordDic != nil)
+            id_obra = Obra.find_by(nombre_obra: wordDic)
+          end
+        end
+      else
+        id_obra = ObraAutoral.find_by(nombre_obra: row[formato.nombre_obra])
+        if(id_obra == nil)
+          wordDic = Diccionario.find_by(nombre_obra: row[formato.nombre_obra])
+          if(wordDic != nil)
+            id_obra = ObraAutoral.find_by(nombre_obra: wordDic)
+          end
+        end
+      end
+
       if(id_obra != nil)
         id_obra = id_obra.Id_obra
         precio = row[formato.precio]
@@ -65,23 +85,30 @@ class IndexController < ApplicationController
         else
           medio_aparicion = row[formato.medio_aparicion]
         end
-
-        aparicion = Aparicion.create(Id_obra: id_obra, Id_reporte: 12, Id_socio: id_socio, Id_Tipo_aparicion: tipo_aparicion, Duracion: duracion, Cantidad: cantidad, Precio: precio, Fecha: params[:fecha], Territorio: territorio, Id_medio_aparicion: medio_aparicion, Fonograma: params[:fonograma])
+        Time.zone = 'Bogota'
+        aparicion = Aparicion.create(Id_obra: id_obra, Id_reporte: reporte.Id_reporte, Id_socio: id_socio, Duracion: duracion, Cantidad: cantidad, Precio: precio, Fecha: params[:fecha], Territorio: territorio, Id_medio_aparicion: medio_aparicion)
+      else
+        data_no_subida.push(row[formato.nombre_obra]);
       end
-    end
 
+    end
+    respond_to do |format|
+
+      format.html # show.html.erb
+      format.json { render json: data_no_subida }
+    end
   end
 
-
+  def executeLoadDic
+    entrada = params[:entrada]
+    salida = params[:salida]
+    Diccionario.create(Entrada: entrada, Salida: salida)
+  end
   def executeLiquidar
-    fecha_init = params[:initDate]
-    fecha_fin = params[:dateEnd]
-    tipo = params[:tipo]
-
+    
     workbook = RubyXL::Workbook.new
     worksheet = workbook.add_worksheet('liquidacion')
-    if(tipo == 0)
-      headers = ['obra', 'territorio','fonograma','porcentaje_subeditor', 'porcentaje_autor', 'porcentaje_editora', 'porcentaje_autor_internacional', 'porcentaje_editora_internacional']
+      headers = ['id obra', 'obra', 'id autor','nombre autor', 'grupo interprete', 'territorio', 'porcentaje_autor', 'porcentaje_editora','valor reportado', 'valor editora', 'valor autor' , 'catalogo']
       col = 0
 
       headers.each do |hd|
@@ -90,28 +117,150 @@ class IndexController < ApplicationController
       end
 
       row = 1
-      Aparicion.where("Fecha > ? AND Fecha < ?", fecha_init,fecha_fin).each do |aparicion|
-        id_obra = aparicion.Id_obra
-        price = aparicion.Precio
+      params[:reportes].each do |id_reporte|
+        Aparicion.where("Id_reporte = ?", id_reporte).each do |aparicion|
+          id_obra = aparicion.Id_obra
+          price = aparicion.Precio
+          obra = ObraAutoral.where("Id_obra=? AND Catalogo=?", id_obra, params[:catalogo])[0]
+          if(obra != nil)
+            if(aparicion.Territorio == 'Colombia' || aparicion.Territorio == nil)
+              porcentaje_autor = obra.Porcentaje_colombia
+              porcentaje_editora = obra.Porcentaje_editora_colombia
+            else
+              porcentaje_autor = obra.Porcentaje_internacional
+              porcentaje_editora = obra.Porcentaje_editora_internacional
+              
+            end
+            if(Contratante.find_by(Id_contratante: obra.Autor_id) != nil)
+                nombre_contratante = Contratante.find_by(Id_contratante: obra.Autor_id).Nombre_contratante
+                
+            else
+              nombre_contratante = 'Autor no reconocido'
+            end
+                price_editora = porcentaje_editora*price
+                price_editora = price_editora - (price_editora*params[:descuento].to_f/100.0)
+                price_autor = porcentaje_autor*price
+                price_autor = price_autor - (price_autor*params[:descuento].to_f/100.0)
+                
+                data = [id_obra, obra.Nombre_obra,obra.Autor_id ,nombre_contratante, Agrupacion.find(obra.Grupo).Nombre_grupo, aparicion.Territorio,porcentaje_autor,porcentaje_editora, price, price_editora, price_autor, obra.Catalogo ]
+                
 
-        obra = Obra.find(id_obra)
-        data = [obra.Nombre_obra, aparicion.Territorio, aparicion.Fonograma, Float(obra.Porcentaje_subeditor)/100*price,Float(obra.Porcentaje_autor)/100*price, Float(obra.Porcentaje_editora)/100*price, Float(obra.Porcentaje_autor_int)/100*price, Float(obra.Porcentaje_editora_int)/100*price  ]
-
-        col = 0
-        data.each do |cl|
-          worksheet.add_cell(row,col,cl)
-          col += 1
+                col = 0
+                data.each do |cl|
+                  worksheet.add_cell(row,col,cl)
+                  col += 1
+                end
+            row += 1
+          end
+          
         end
-        row += 1
       end
 
-      workbook.write("liquidacion.xlsx")
-    elsif(tipo == 1)
+      send_data workbook.stream.string, filename: "liquidacionAutoral.xlsx",
+                                    disposition: 'attachment'
+      
+    end
+
+    def executeLoadFormat
+      organizacion = params[:organizacion]
+      nombre = params[:nombre]
+      tipo = params[:tipo]
+      duracion = params[:duracion]
+      cantidad = params[:cantidad]
+      precio = params[:precio]
+      fecha = params[:fecha]
+      territorio = params[:territorio]
+      medio = params[:medio]
+      fila = params[:fila]
+      
+      FormatoDocumento.create(id_socio: organizacion, nombre_obra: nombre, tipo_aparicion: tipo, duracion: duracion, cantidad: cantidad, precio: precio, fecha: fecha, territorio: territorio, medio_aparicion: medio, fila_inicial: fila)
+      redirect_to "/index/loadFormat"
+    end
+
+    def executeEditObraFono
+            Obra.update(params[:id], Nombre_obra: params[:nombre], Id_grupo: params[:grupo], Porcentaje_subeditor_fon: params[:porcentaje_subeditor], Porcentaje_editora_fon: params[:porcentaje_editor], Porcentaje_interprete_fon: params[:porcentaje_interprete], Editora: params[:porcentaje_editora_internacional], Editora: params[:catalogo])
+      redirect_to "/index/obrasFono"
 
     end
 
+    def executeCreateObraFono
+            Obra.create(Id_obra: params[:id], Nombre_obra: params[:nombre], Id_grupo: params[:grupo], Porcentaje_subeditor_fon: params[:porcentaje_subeditor], Porcentaje_editora_fon: params[:porcentaje_editor], Porcentaje_interprete_fon: params[:porcentaje_interprete], Editora: params[:porcentaje_editora_internacional], Editora: params[:catalogo])
+          redirect_to "/index/obrasFono"
+
+          end
     
-  end
+    def executeCreateObraAutoral
+      ObraAutoral.create(Nombre_obra: params[:nombre], Autor_id: params[:autor], Grupo: params[:grupo], Porcentaje_colombia: params[:porcentaje_colombia], Porcentaje_internacional: params[:porcentaje_internacional], Porcentaje_editora_colombia: params[:porcentaje_editora_colombia], Porcentaje_editora_internacional: params[:porcentaje_editora_internacional], Catalogo: params[:catalogo])
+      redirect_to "/index/obrasAutorales"
+    end
+    def executeEditObraAutoral
+      ObraAutoral.update(params[:id], Nombre_obra: params[:nombre], Autor_id: params[:autor], Grupo: params[:grupo], Porcentaje_colombia: params[:porcentaje_colombia], Porcentaje_internacional: params[:porcentaje_internacional], Porcentaje_editora_colombia: params[:porcentaje_editora_colombia], Porcentaje_editora_internacional: params[:porcentaje_editora_internacional], Catalogo: params[:catalogo])
+      redirect_to "/index/obrasAutorales"
+    end
 
+    def editarObraAutoral
+      @obra_autoral = ObraAutoral.find(params[:id])
+    end
+    def editarObraFono
+      @obra_fono = Obra.find(params[:id])
+    end
 
+    def obrasFono
+      @obras_fono = Array.new()
+      Obra.find_each do |obra|
+        @obras_fono.push(obra)
+      end
+    end
+
+    def obrasAutorales
+      @obras_autorales = Array.new()
+      ObraAutoral.find_each do |obra|
+        @obras_autorales.push(obra)
+      end
+    end
+
+    def executeLiquidarFonografico
+    
+      workbook = RubyXL::Workbook.new
+      worksheet = workbook.add_worksheet('liquidacion')
+        headers = ['id obra', 'obra', 'grupo interprete', 'territorio', 'porcentaje interprete', 'porcentaje editora', 'porcentaje sub editora','valor reportado', 'valor sub editora', 'valor editora', 'valor interprete' , 'editora']
+        col = 0
+  
+        headers.each do |hd|
+          worksheet.add_cell(0,col,hd)
+          col += 1
+        end
+  
+        row = 1
+        params[:reportes].each do |id_reporte|
+          Aparicion.where("Id_reporte = ?", id_reporte).each do |aparicion|
+            id_obra = aparicion.Id_obra
+            price = aparicion.Precio
+            obra = Obra.where("Id_obra=? AND Editora=?", id_obra, params[:catalogo])[0]
+            if(obra != nil)
+              porcentaje_interprete = obra.Porcentaje_interprete_fon
+              porcentaje_editora = obra.Porcentaje_editora_fon
+              porcentaje_subeditora = obra.Porcentaje_subeditor_fon
+              valor_subeditor = price*porcentaje_subeditora;
+              valor_subeditor -= valor_subeditor*params[:descuento].to_f/100.0
+              valor_tot = price - valor_subeditor
+              valor_editora = valor_tot*porcentaje_editora
+              valor_editora -= valor_editora*params[:descuento].to_f/100.0
+              valor_interprete = valor_tot*porcentaje_interprete
+              valor_interprete -= valor_interprete*params[:descuento].to_f/100.0
+              data = [id_obra, obra.Nombre_obra, Agrupacion.find(obra.Id_grupo).Nombre_grupo, aparicion.Territorio,porcentaje_interprete, porcentaje_editora,porcentaje_subeditora,price , valor_subeditor ,valor_editora, valor_interprete, obra.Editora  ]
+    
+              col = 0
+              data.each do |cl|
+                worksheet.add_cell(row,col,cl)
+                col += 1
+              end
+              row += 1
+            end
+            
+          end
+        end
+  
+      send_data workbook.stream.string, filename: "liquidacionFonografico.xlsx",
+                                    disposition: 'attachment'      end
 end

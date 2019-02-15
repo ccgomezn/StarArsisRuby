@@ -4,12 +4,30 @@ Rails.application.routes.draw do
   get 'index/loadAgrupation'
   get 'index/loadClient'
   get 'index/liquidar'
+  get 'index/liquidar_fonografico'
+  get 'index/diccionario'
+  get 'index/loadSong'
 
+  get 'index/loadFormat'
+  get 'index/obrasFono'
+  get 'index/obrasAutorales'
+  get 'index/editarObraAutoral'
+  get 'index/editarObraFono'
+  get 'index/crearObraFono'
+  get 'index/crearObraAutoral'
 
   match '/executeLoadAgrupation' => 'index#executeLoadAgrupation', via: :post
   match '/executeLoadClient' => 'index#executeLoadClient', via: :post
   match '/executeLoadFile' => 'index#executeLoadFile', via: :post
   match '/executeLiquidar' => 'index#executeLiquidar', via: :post
+  match '/executeLiquidarFonografico' => 'index#executeLiquidarFonografico', via: :post
+  match '/executeLoadDic' => 'index#executeLoadDic', via: :post
+  match '/executeLoadFormat' => 'index#executeLoadFormat', via: :post
+  match '/executeEditObraAutoral' => 'index#executeEditObraAutoral', via: :post
+  match '/executeEditObraFono' => 'index#executeEditObraFono', via: :post
+  match '/executeCreateObraFono' => 'index#executeCreateObraFono', via: :post
+  match '/executeCreateObraAutoral' => 'index#executeCreateObraAutoral', via: :post
+
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
   root 'index#index'
 end

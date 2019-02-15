@@ -28,7 +28,7 @@
 <body>
 
 
-    <!-- Left Panel -->
+        <!-- Left Panel -->
 
     <aside id="left-panel" class="left-panel">
         <nav class="navbar navbar-expand-sm navbar-default">
@@ -43,17 +43,21 @@
 
             <div id="main-menu" class="main-menu collapse navbar-collapse">
                 <ul class="nav navbar-nav">
-                    <li class="active">
-                        <a href="index.html"> <i class="menu-icon fa fa-dashboard"></i>Dashboard </a>
+                    <li>
+                        <a href="/index/index"> <i class="menu-icon fa fa-dashboard"></i>Dashboard </a>
                     </li>
                     <h3 class="menu-title">Liquidación</h3><!-- /.menu-title -->
                     <li>
-                        <a href="#" > <i class="menu-icon fa fa-laptop"></i>Cargar archivo</a>
-
+                        <a href="/index/loadFile" > <i class="menu-icon fa fa-laptop"></i>Cargar archivo</a>
+                       
+                    </li>
+                    <li class="active">
+                        <a href="/index/liquidar"> <i class="menu-icon fa fa-table"></i>Liquidar autoral</a>
+                       
                     </li>
                     <li>
-                        <a href="#"> <i class="menu-icon fa fa-table"></i>Liquidar</a>
-
+                        <a href="/index/liquidar_fonografico"> <i class="menu-icon fa fa-table"></i>Liquidar fonografico</a>
+                       
                     </li>
                     <!--
                     <li class="menu-item-has-children dropdown">
@@ -63,21 +67,36 @@
                             <li><i class="menu-icon fa fa-th"></i><a href="forms-advanced.html">Advanced Form</a></li>
                         </ul>
                     </li>
-                -->
-                <h3 class="menu-title">Consultas y reportes</h3><!-- /.menu-title -->
+                    -->
+                    
+                    <h3 class="menu-title">Consultas y reportes</h3><!-- /.menu-title -->
 
-                <li >
-                    <a href="#"> <i class="menu-icon fa fa-tasks"></i>Consulta a base de datos</a>
-
-                </li>
-                <li>
-                    <a href="widgets.html"> <i class="menu-icon ti-email"></i>Creación de reporte</a>
-                </li>
-
-            </ul>
-        </div><!-- /.navbar-collapse -->
-    </nav>
-</aside><!-- /#left-panel -->
+                    <li >
+                        <a href="/index/loadClient"> <i class="menu-icon fa fa-tasks"></i>Clientes</a>
+                        
+                    </li>
+                    <li>
+                        <a href="/index/loadAgrupation"> <i class="menu-icon fa fa-tasks"></i>Agrupación</a>
+                    </li>
+                    <li>
+                        <a href="/index/loadSong"> <i class="menu-icon fa fa-tasks"></i>Obra</a>
+                    </li>
+                    <li>
+                        <a href="/index/diccionario"> <i class="menu-icon fa fa-tasks"></i>Diccionario</a>
+                    </li>
+                     <li>
+                        <a href="/index/loadFormat"> <i class="menu-icon fa fa-tasks"></i>Formato</a>
+                    </li>
+                    <li>
+                        <a href="/index/obrasAutorales"> <i class="menu-icon fa fa-tasks"></i>Obras autorales</a>
+                    </li>
+                    <li>
+                        <a href="/index/obrasFono"> <i class="menu-icon fa fa-tasks"></i>Obras fonograficas</a>
+                    </li>
+                </ul>
+            </div><!-- /.navbar-collapse -->
+        </nav>
+    </aside><!-- /#left-panel -->
 
 <!-- Left Panel -->
 
@@ -235,50 +254,47 @@
         <div class="col-xs-12 col-sm-12">
             <div class="row">
                 <div class="col-xs-12 col-sm-12">
+                    <form action="/executeLiquidar" method="post">
+
                     <div class="card">
                         <div class="card-header">
-                         a        <strong>Liquidar</strong> <small>apariciones</small>
-                     </div>
-                     <form action="/executeLiquidar" method="post">
+                         <strong>Liquidación autoral</strong> <small>apariciones</small>
+                        </div>
                         <div class="card-body card-block">
                             <div class="form-group">
-                                <div class="form-row">
-                                    <div class="col-xs-6 col-sm-6">
-                                        <label class=" form-control-label">Fecha de inico</label>
-                                        <div class="input-group">
-                                            <div class="input-group-addon"><i class="fa fa-list-ol"></i></div>
-                                            <input type="date" required name="initDate">
-                                        </div>
-                                        <small class="form-text text-muted">Fecha de inicio</small>
-                                    </div>
-                                    <div class="col-xs-6 col-sm-6">
-                                        <label class=" form-control-label">Fecha fin</label>
-                                        <div class="input-group">
-                                            <div class="input-group-addon"><i class="fa fa-list-ol"></i></div>
-                                            <input type="date" required name="dateEnd">
-                                        </div>
-                                        <small class="form-text text-muted">Fecha fin</small>
-                                    </div>
+                                
 
+                                <div class="form-row">
+                                    
+                                    <div class="col-xs-6 col-sm-6">
+                                        <label class=" form-control-label">Reportes a liquidar</label>
+                                        <div class="input-group">
+                                            <%= select_tag "reportes", options_from_collection_for_select(Reporte.where(:Id_tipo_aparicion => 2, :Liquidado => 0), :Id_reporte, :Nombre_reporte), {:class=>'standardSelect', :prompt => 'Reportes', :multiple => true}  %>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-6 col-sm-6">
+                                        <label class=" form-control-label">Porcentaje de descuento</label>
+                                        <input type="number" id="descuento" value="0,00" step="0.01" name="descuento"></input>
+                                    </div>
                                 </div>
-
                                 <div class="form-row">
                                     <div class="col-xs-6 col-sm-6">
-                                        <label class=" form-control-label">Tipo de liquidacion</label>
+                                        <label class=" form-control-label">Reportes a liquidar</label>
                                         <div class="input-group">
-                                            <%= select_tag "tipo", options_for_select([['Autoral', 0], ['Fonografico', 1], ['General', 2]])%>
+                                            <select id="catalogo" name="catalogo">
+                                                <option value="">Origin</option>
+                                                <option value="STAR ARSIS">Star Arsis</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
-
-
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="fa fa-dot-circle-o">Subir documento</i> 
-                                </button>
                             </div>
                         </div>
-                    </form>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                          <i class="fa fa-dot-circle-o"></i>Liquidar</button>
                 </div>
+                </form>
+
 
             </div>
         </div>
@@ -329,6 +345,9 @@
             dta = {};
             dta.document = datas;
             dta.socio = document.getElementById("organizacion").value
+            dta.descuento = document.getElementById("descuento").value
+            dta.catalogo = document.getElementById("catalogo").value
+            console.log(dta)
             $.ajax({
                 type: "POST",
                 url: "/executeLoadFile",
