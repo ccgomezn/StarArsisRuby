@@ -29,8 +29,7 @@
 
 
         <!-- Left Panel -->
-
-   <aside id="left-panel" class="left-panel">
+ <aside id="left-panel" class="left-panel">
         <nav class="navbar navbar-expand-sm navbar-default">
 
             <div class="navbar-header">
@@ -63,7 +62,7 @@
                         <a href="/index/liquidar_general_autor"> <i class="menu-icon fa fa-table"></i>Liquidación general autoral</a>
                        
                     </li>
-                    <li>
+                    <li class="active"> 
                         <a href="/index/liquidar_general_fonografico"> <i class="menu-icon fa fa-table"></i>Liquidación general fonografico</a>
                        
                     </li>
@@ -242,7 +241,7 @@
     <div class="col-sm-4">
         <div class="page-header float-left">
             <div class="page-title">
-                <h1>Cargar documento</h1>
+                <h1>Liquidar apariciones</h1>
             </div>
         </div>
     </div>
@@ -250,7 +249,7 @@
         <div class="page-header float-right">
             <div class="page-title">
                 <ol class="breadcrumb text-right">
-                    <li class="active">Cargar documento</li>
+                    <li class="active">Cargar apariciones</li>
                 </ol>
             </div>
         </div>
@@ -262,51 +261,54 @@
         <div class="col-xs-12 col-sm-12">
             <div class="row">
                 <div class="col-xs-12 col-sm-12">
+                    <form action="/executeLiquidarGeneralFonografico" method="post">
+
                     <div class="card">
                         <div class="card-header">
-                            <strong>Carga</strong> <small>documento</small>
-                        </div>
-                        <div class="card-body">
-
+                         <strong>Liquidación autoral general</strong> <small>apariciones</small>
                         </div>
                         <div class="card-body card-block">
                             <div class="form-group">
+                                
+
                                 <div class="form-row">
-                                    <div class="col-xs-12 col-sm-12">
-                                        <label class=" form-control-label">Palabra entrada</label>
+                                    
+                                    <div class="col-xs-6 col-sm-6">
+                                        <label class=" form-control-label">Grupo a liquidar</label>
                                         <div class="input-group">
-                                            <input type="text" required id="entrada" name="entrada">
+                                            <%= select_tag "grupo", options_from_collection_for_select(Agrupacion.all, :Id_grupo, :Nombre_grupo), {:class=>'standardSelect', :prompt => 'Agrupaciones'}  %>
                                         </div>
-                                        <small class="form-text text-muted">Palabra entrada</small>
                                     </div>
                                     
                                 </div>
                                 <div class="form-row">
-                                    <div class="col-xs-12 col-sm-12">
-                                        <label class=" form-control-label">Palabra salida</label>
+                                    <div class="col-xs-6 col-sm-6">
+                                        <label class=" form-control-label">Fecha inicial</label>
                                         <div class="input-group">
-                                            <input type="text" required id="salida" name="salida">
+                                            <input type="date" name="fecha_inicio">
                                         </div>
-                                        <small class="form-text text-muted">Palabra salida</small>
+                                    </div>
+                                    <div class="col-xs-6 col-sm-6">
+                                        <label class=" form-control-label">Fecha final</label>
+                                        <div class="input-group">
+                                            <input type="date" name="fecha_fin">
+                                        </div>
                                     </div>
                                 </div>
-
-                                
-                                
-                                
-                                <button onclick="return loadDiccionario()" class="btn btn-primary btn-sm">
-                                    <i class="fa fa-dot-circle-o"></i> Subir a diccionario
-                                </button>
                             </div>
                         </div>
-                    </div>
-
+                        <button type="submit" class="btn btn-primary btn-sm">
+                          <i class="fa fa-dot-circle-o"></i>Liquidar</button>
                 </div>
+                </form>
+
+
             </div>
+        </div>
 
 
-        </div><!-- .animated -->
-    </div> <!-- .content -->
+    </div><!-- .animated -->
+</div> <!-- .content -->
 </div><!-- /#right-panel -->
 
 
@@ -326,26 +328,47 @@
 <%= javascript_include_tag('jquery.vmap.world.js') %>
 
 <script>
-    function loadDiccionario(){
+    function loadFile(){
+        var file = document.getElementById('input-excel').files[0];
+        console.log(file)
+        var reader = new FileReader();
+        reader.readAsArrayBuffer(file);
         
+        reader.onload = function(file) {
+            var datas = [];
+            var data = new Uint8Array(reader.result);
+            var wb = XLSX.read(data,{type:'array'});
+            var csv = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+            for(var i = 1; i < csv.length; i++){
+
+                dataAux = []
+                for(var j = 0; j < csv[i].length; j++){
+                    dataAux.push(csv[i][j]);
+                }
+                datas.push(dataAux)
+
+            }
+            console.log(csv)
             dta = {};
-            dta.entrada = document.getElementById("entrada").value;
-            dta.salida = document.getElementById("salida").value;
-            
+            dta.document = datas;
+            dta.socio = document.getElementById("organizacion").value
+            dta.descuento = document.getElementById("descuento").value
+            dta.catalogo = document.getElementById("catalogo").value
+            console.log(dta)
             $.ajax({
                 type: "POST",
-                url: "/executeLoadDic",
+                url: "/executeLoadFile",
                 async: false,
                 dataType: 'json',
                 contentType: 'application/json',
                 data: JSON.stringify(dta)
             }).done(function(status){
-                console.log(status)
+                return true
             });
             return false
 
         }
-    
+    }
 
     ( function ( $ ) {
         "use strict";

@@ -7,6 +7,8 @@ Rails.application.routes.draw do
   get 'index/liquidar_fonografico'
   get 'index/diccionario'
   get 'index/loadSong'
+  get 'index/liquidar_general_autor'
+  get 'index/liquidar_general_fonografico'
 
   get 'index/loadFormat'
   get 'index/obrasFono'
@@ -27,6 +29,8 @@ Rails.application.routes.draw do
   match '/executeEditObraFono' => 'index#executeEditObraFono', via: :post
   match '/executeCreateObraFono' => 'index#executeCreateObraFono', via: :post
   match '/executeCreateObraAutoral' => 'index#executeCreateObraAutoral', via: :post
+  match '/executeLiquidarGeneralAutoral' => 'index#executeLiquidarGeneralAutoral', via: :post
+  match '/executeLiquidarGeneralFonografico' => 'index#executeLiquidarGeneralFonografico', via: :post
 
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
   root 'index#index'

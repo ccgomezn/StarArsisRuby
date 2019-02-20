@@ -120,7 +120,7 @@ class IndexController < ApplicationController
       params[:reportes].each do |id_reporte|
         Aparicion.where("Id_reporte = ?", id_reporte).each do |aparicion|
           id_obra = aparicion.Id_obra
-          price = aparicion.Precio
+          price = aparicion.Precio/1.19
           obra = ObraAutoral.where("Id_obra=? AND Catalogo=?", id_obra, params[:catalogo])[0]
           if(obra != nil)
             if(aparicion.Territorio == 'Colombia' || aparicion.Territorio == nil)
@@ -155,6 +155,64 @@ class IndexController < ApplicationController
           
         end
       end
+
+      send_data workbook.stream.string, filename: "liquidacionAutoral.xlsx",
+                                    disposition: 'attachment'
+      
+    end
+
+
+    def executeLiquidarGeneralAutoral
+    
+    workbook = RubyXL::Workbook.new
+    worksheet = workbook.add_worksheet('liquidacion')
+      headers = ['id obra', 'obra', 'id autor','nombre autor', 'grupo interprete', 'territorio', 'porcentaje_autor', 'porcentaje_editora','valor reportado', 'valor editora', 'valor autor' , 'catalogo']
+      col = 0
+
+      headers.each do |hd|
+        worksheet.add_cell(0,col,hd)
+        col += 1
+      end
+      usuario = params[:id_usuario]
+      fecha_i = params[:fecha_inicio]
+      fecha_f = params[:fecha_fin]
+      row = 1
+        Aparicion.joins(" INNER JOIN Obra_autoral ON Aparicion.Id_obra = Obra_autoral.Id_obra").where("Obra_autoral.Autor_id = ? AND Aparicion.fecha >= ? AND Aparicion.fecha <= ?", usuario, fecha_i, fecha_f).each do |aparicion|
+          id_obra = aparicion.Id_obra
+          price = aparicion.Precio/1.19
+          obra = ObraAutoral.where("Id_obra=? AND Catalogo=?", id_obra)[0]
+          if(obra != nil)
+            if(aparicion.Territorio == 'Colombia' || aparicion.Territorio == nil)
+              porcentaje_autor = obra.Porcentaje_colombia
+              porcentaje_editora = obra.Porcentaje_editora_colombia
+            else
+              porcentaje_autor = obra.Porcentaje_internacional
+              porcentaje_editora = obra.Porcentaje_editora_internacional
+              
+            end
+            if(Contratante.find_by(Id_contratante: obra.Autor_id) != nil)
+                nombre_contratante = Contratante.find_by(Id_contratante: obra.Autor_id).Nombre_contratante
+                
+            else
+              nombre_contratante = 'Autor no reconocido'
+            end
+                price_editora = porcentaje_editora*price
+                price_editora = price_editora - (price_editora*params[:descuento].to_f/100.0)
+                price_autor = porcentaje_autor*price
+                price_autor = price_autor - (price_autor*params[:descuento].to_f/100.0)
+                
+                data = [id_obra, obra.Nombre_obra,obra.Autor_id ,nombre_contratante, Agrupacion.find(obra.Grupo).Nombre_grupo, aparicion.Territorio,porcentaje_autor,porcentaje_editora, price, price_editora, price_autor, obra.Catalogo ]
+                
+
+                col = 0
+                data.each do |cl|
+                  worksheet.add_cell(row,col,cl)
+                  col += 1
+                end
+            row += 1
+          end
+          
+        end
 
       send_data workbook.stream.string, filename: "liquidacionAutoral.xlsx",
                                     disposition: 'attachment'
@@ -235,7 +293,7 @@ class IndexController < ApplicationController
         params[:reportes].each do |id_reporte|
           Aparicion.where("Id_reporte = ?", id_reporte).each do |aparicion|
             id_obra = aparicion.Id_obra
-            price = aparicion.Precio
+            price = aparicion.Precio*params[:euro].to_f*params[:dolar].to_f/1.19
             obra = Obra.where("Id_obra=? AND Editora=?", id_obra, params[:catalogo])[0]
             if(obra != nil)
               porcentaje_interprete = obra.Porcentaje_interprete_fon
@@ -262,5 +320,52 @@ class IndexController < ApplicationController
         end
   
       send_data workbook.stream.string, filename: "liquidacionFonografico.xlsx",
-                                    disposition: 'attachment'      end
+                                    disposition: 'attachment'
+  end
+  def executeLiquidarGeneralFonografico
+    
+      workbook = RubyXL::Workbook.new
+      worksheet = workbook.add_worksheet('liquidacion')
+        headers = ['id obra', 'obra', 'grupo interprete', 'territorio', 'porcentaje interprete', 'porcentaje editora', 'porcentaje sub editora','valor reportado', 'valor sub editora', 'valor editora', 'valor interprete' , 'editora']
+        col = 0
+  
+        headers.each do |hd|
+          worksheet.add_cell(0,col,hd)
+          col += 1
+        end
+        usuario = params[:grupo]
+        fecha_i = params[:fecha_inicio]
+        fecha_f = params[:fecha_fin]
+        row = 1
+        Aparicion.joins(" INNER JOIN Obra ON Aparicion.Id_obra = Obra.Id_obra").where("Obra.Id_grupo = ? AND Aparicion.fecha >= ? AND Aparicion.fecha <= ?", usuario, fecha_i, fecha_f).each do |aparicion|
+            id_obra = aparicion.Id_obra
+            price = aparicion.Precio*params[:euro].to_f*params[:dolar].to_f/1.19
+            obra = Obra.where("Id_obra=?", id_obra)[0]
+            if(obra != nil)
+              porcentaje_interprete = obra.Porcentaje_interprete_fon
+              porcentaje_editora = obra.Porcentaje_editora_fon
+              porcentaje_subeditora = obra.Porcentaje_subeditor_fon
+              valor_subeditor = price*porcentaje_subeditora;
+              valor_subeditor -= valor_subeditor*params[:descuento].to_f/100.0
+              valor_tot = price - valor_subeditor
+              valor_editora = valor_tot*porcentaje_editora
+              valor_editora -= valor_editora*params[:descuento].to_f/100.0
+              valor_interprete = valor_tot*porcentaje_interprete
+              valor_interprete -= valor_interprete*params[:descuento].to_f/100.0
+              data = [id_obra, obra.Nombre_obra, Agrupacion.find(obra.Id_grupo).Nombre_grupo, aparicion.Territorio,porcentaje_interprete, porcentaje_editora,porcentaje_subeditora,price , valor_subeditor ,valor_editora, valor_interprete, obra.Editora  ]
+    
+              col = 0
+              data.each do |cl|
+                worksheet.add_cell(row,col,cl)
+                col += 1
+              end
+              row += 1
+            end
+            
+          end
+        
+  
+      send_data workbook.stream.string, filename: "liquidacionFonografico.xlsx",
+                                    disposition: 'attachment'      
+    end
 end
