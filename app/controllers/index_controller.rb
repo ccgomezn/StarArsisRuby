@@ -115,12 +115,17 @@ class IndexController < ApplicationController
         worksheet.add_cell(0,col,hd)
         col += 1
       end
-
+      
       row = 1
-      params[:reportes].each do |id_reporte|
+      for i in 0..(params[:n_reports].to_i-1)
+        id_reporte = params[:"report_#{i}"]
+        iva_incluido = params[:"iva_incluido#{i}"]
+        mas_iva = params[:"mas_iva#{i}"]
         Aparicion.where("Id_reporte = ?", id_reporte).each do |aparicion|
           id_obra = aparicion.Id_obra
-          price = aparicion.Precio/1.19
+          price = aparicion.Precio
+          price = price/(1+(iva_incluido.to_f)/100.0)
+          price = price - price*(mas_iva.to_f)/100.0
           obra = ObraAutoral.where("Id_obra=? AND Catalogo=?", id_obra, params[:catalogo])[0]
           if(obra != nil)
             if(aparicion.Territorio == 'Colombia' || aparicion.Territorio == nil)
@@ -290,10 +295,15 @@ class IndexController < ApplicationController
         end
   
         row = 1
-        params[:reportes].each do |id_reporte|
-          Aparicion.where("Id_reporte = ?", id_reporte).each do |aparicion|
+        for i in 0..(params[:n_reports].to_i-1)
+            id_reporte = params[:"report_#{i}"]
+            iva_incluido = params[:"iva_incluido#{i}"]
+            mas_iva = params[:"mas_iva#{i}"]          
+            Aparicion.where("Id_reporte = ?", id_reporte).each do |aparicion|
             id_obra = aparicion.Id_obra
-            price = aparicion.Precio*params[:euro].to_f*params[:dolar].to_f/1.19
+            price = aparicion.Precio
+            price = price/(1+(iva_incluido.to_f)/100.0)
+            price = price - price*(mas_iva.to_f)/100.0
             obra = Obra.where("Id_obra=? AND Editora=?", id_obra, params[:catalogo])[0]
             if(obra != nil)
               porcentaje_interprete = obra.Porcentaje_interprete_fon

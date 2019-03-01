@@ -287,7 +287,7 @@
                                         <div class="col-xs-6 col-sm-6">
                                             <label class=" form-control-label">Grupo</label>
                                             <div class="input-group">
-                                            <%= select_tag "grupo", options_from_collection_for_select(Agrupacion.all, :Id_grupo, :Nombre_grupo), {:class=>'standardSelect', :prompt => 'Grupo', :selected => @obra_fono.Id_grupo, :value => @obra_autoral.Id_grupo}  %>
+                                            <%= select_tag "grupo", options_from_collection_for_select(Agrupacion.all, :Id_grupo, :Nombre_grupo), {:class=>'standardSelect', :prompt => 'Grupo', :selected => @obra_fono.Id_grupo, :value => @obra_fono.Id_grupo}  %>
                                             </div>
                                             <small class="form-text text-muted">Grupo</small>
                                         </div>
