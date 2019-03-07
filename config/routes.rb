@@ -31,6 +31,8 @@ Rails.application.routes.draw do
   match '/executeCreateObraAutoral' => 'index#executeCreateObraAutoral', via: :post
   match '/executeLiquidarGeneralAutoral' => 'index#executeLiquidarGeneralAutoral', via: :post
   match '/executeLiquidarGeneralFonografico' => 'index#executeLiquidarGeneralFonografico', via: :post
+  match '/deleteAutoral' => 'index#deleteAutoral', via: :post
+  match '/deleteFonografico' => 'index#deleteFonografico', via: :post
 
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
   root 'index#index'

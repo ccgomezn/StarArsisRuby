@@ -281,7 +281,16 @@ class IndexController < ApplicationController
         @obras_autorales.push(obra)
       end
     end
+    def deleteAutoral
+      Reporte.find(params[:id]).destroy
+      redirect_to "/index/liquidar"
 
+    end
+    def deleteFonografico
+      Reporte.find(params[:id]).destroy
+      redirect_to "/index/liquidar_fonografico"
+
+    end
     def executeLiquidarFonografico
     
       workbook = RubyXL::Workbook.new

@@ -278,11 +278,14 @@
                                         <div class="input-group">
 <% Reporte.where(:Id_tipo_aparicion => 1, :Liquidado => 0).each do |report| %>
                                                    <div class="row col-md-12" class="padding: 10px;" id="lista_<%=report.Id_reporte%>">
-                                                        <div class="col-xs-8 col-sm-8 ">
+                                                        <div class="col-xs-4 col-sm-4 ">
                                                             <p><%= report.Nombre_reporte %></p>
                                                         </div>
                                                         <div class="col-xs-4 col-sm-4">
                                                             <button type="button" class="btn btn-success" onclick="añadir(<%=report.Id_reporte%>, '<%= report.Nombre_reporte%>')">Añadir</button>
+                                                        </div>
+                                                        <div class="col-xs-4 col-sm-4">
+                                                            <button type="button" class="btn btn-danger" onclick="eliminar(<%=report.Id_reporte%>)">Eliminar</button>
                                                         </div>
                                                    </div>
                                             <%end%>                                        </div>
@@ -337,7 +340,9 @@
     </div><!-- .animated -->
 </div> <!-- .content -->
 </div><!-- /#right-panel -->
-
+<form id="del" action="/deleteFonografico" method="post">
+    <input type="hidden" id="del_id" name="id">
+</form>
 
 
 <%= javascript_include_tag('application.js') %>
@@ -420,6 +425,10 @@
                                 +'<div class="col-md-4"><label>Mas iva (%)</label><input name="mas_iva'+vl+'"></div>'
                             +'</div>'
         )
+    }
+    function eliminar(id){
+        $('#del_id').val(id)
+        $('#del').submit()
     }
 </script>
 
