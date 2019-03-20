@@ -70,7 +70,7 @@ class IndexController < ApplicationController
         end
         if(line[47..79] != nil)
           nombre_obra = line[47..79].strip
-          precio = line[286..295].to_i
+          precio = (line[286..295].to_i/100.0).round
           if(params[:tipo_aparicion].to_i === 1)
             id_obra = Obra.find_by(nombre_obra: nombre_obra)
             if(id_obra == nil)
