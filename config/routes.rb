@@ -17,10 +17,12 @@ Rails.application.routes.draw do
   get 'index/editarObraFono'
   get 'index/crearObraFono'
   get 'index/crearObraAutoral'
+  get 'index/load_file_by_id'
 
   match '/executeLoadAgrupation' => 'index#executeLoadAgrupation', via: :post
   match '/executeLoadClient' => 'index#executeLoadClient', via: :post
   match '/executeLoadFile' => 'index#executeLoadFile', via: :post
+  match '/executeLoadFileById' => 'index#executeLoadFileById', via: :post
   match '/executeLiquidar' => 'index#executeLiquidar', via: :post
   match '/executeLiquidarFonografico' => 'index#executeLiquidarFonografico', via: :post
   match '/executeLoadDic' => 'index#executeLoadDic', via: :post

@@ -278,6 +278,11 @@
                                                 <%= select_tag "organizacion", options_from_collection_for_select(Organizacion.all, :Id_socio, :Nombre_socio), {:class=>'standardSelect', :prompt => 'Organizacion'}  %>
                                                 <small class="form-text text-muted">seleccione la organización</small>
                                             </div>
+                                             <div class="col-xs-6 col-sm-6">
+                                                <label>Nombre formato</label>
+                                                <input type="text" name="nombre_formato">
+                                                <small class="form-text text-muted">seleccione la organización</small>
+                                            </div>
 
                                            
                                         </div>
@@ -372,7 +377,7 @@
                                         </div>
                                         <div class="form-group row">
                                                 <button type="submit" class="btn btn-primary btn-sm">
-                              <i class="fa fa-dot-circle-o"></i> cARGAR FORMATO
+                              <i class="fa fa-dot-circle-o"></i> Cargar formato
                             </button>
                                         </div>
                                         

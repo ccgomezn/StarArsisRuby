@@ -9,7 +9,7 @@
     background:rgba(0,0,0,.4);
     cursor:pointer;
     display:none;
-    height:100%;
+    height:100%%;
     position:fixed;
     text-align:center;
     top:0;
@@ -25,7 +25,7 @@
     background-color: #fff;
     box-shadow: 10px 10px 60px #555;
     display: inline-block;
-   height:100px;
+   height:auto;
     max-width: 551px;
     min-height: 100px;
     vertical-align: middle;
@@ -304,7 +304,7 @@
     <div class="col-sm-4">
         <div class="page-header float-left">
             <div class="page-title">
-                <h1>Cargar documento</h1>
+                <h1>Cargar documento por ID</h1>
             </div>
         </div>
     </div>
@@ -312,7 +312,7 @@
         <div class="page-header float-right">
             <div class="page-title">
                 <ol class="breadcrumb text-right">
-                    <li class="active">Cargar documento</li>
+                    <li class="active">Cargar documento por ID</li>
                 </ol>
             </div>
         </div>
@@ -326,7 +326,7 @@
                 <div class="col-xs-12 col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <strong>Carga</strong> <small>documento</small>
+                            <strong>Carga</strong> <small>documento por ID</small>
                         </div>
                         <div class="card-body">
 
@@ -365,11 +365,25 @@
 
                                     <div class="form-row">
                                         <div class="col-xs-6 col-sm-6">
-                                            <label>Formato proveniente</label>
-                                            <%= select_tag "organizacion", options_from_collection_for_select(FormatoDocumento.all, :id, :nombre_formato), {:class=>'standardSelect', :prompt => 'Organizacion'}  %>
-                                            <small class="form-text text-muted">seleccione la organización</small>
-                                        </div>
+                                            <label>Columna ID</label>
+                                                <input id="cm_id" name="cm_id" type="number" class="form-control-file">
 
+                                            <small class="form-text text-muted">Columna ID</small>
+                                        </div><div class="col-xs-6 col-sm-6">
+                                            <label>Fila inicio</label>
+                                                <input id="row" name="row" type="number" class="form-control-file">
+
+                                            <small class="form-text text-muted">Fila inicio</small>
+                                        </div>
+</div>
+<div class="form-row">
+
+<div class="col-xs-6 col-sm-6">
+                                            <label>Coumna valor</label>
+                                                <input id="cm_valor" name="cm_valor" type="number" class="form-control-file">
+
+                                            <small class="form-text text-muted">Columna valor</small>
+                                        </div>
                                         <div class="col-xs-6 col-sm-6">
                                             <div class="form-group">
                                                 <input id="input-excel" name="document" type="file" class="form-control-file" name="file">
@@ -401,7 +415,6 @@
         </div><!-- .animated -->
     </div> <!-- .content -->
 </div><!-- /#right-panel -->
-
 <div class="hover_bkgr_fricc">
     <span class="helper"></span>
     <div>
@@ -432,13 +445,11 @@
 
         var file = document.getElementById('input-excel').files[0];
         var reader = new FileReader();
-        if(document.getElementById("organizacion").value != 6){
 
             reader.readAsArrayBuffer(file);
             
             reader.onload = function(file) {
                 var dta = {};
-                dta.socio = document.getElementById("organizacion").value
                     var datas = [];
                     var data = new Uint8Array(reader.result);
                     var wb = XLSX.read(data,{type:'array'});
@@ -447,13 +458,7 @@
 
                         dataAux = []
                         for(var j = 0; j < csv[i].length; j++){
-                            if(csv[i][j] == null){
-                            dataAux.push('');
-
-                            }else{
                             dataAux.push(csv[i][j]);
-
-                            }
                         }
                         datas.push(dataAux)
 
@@ -462,78 +467,37 @@
                 
                     
                 
-                dta.socio = document.getElementById("organizacion").value
                 dta.fecha = document.getElementById("date").value
                 dta.tipo_aparicion = document.getElementById("tipo_aparicion").value
                 dta.nombre = document.getElementById("nombre").value
+                dta.col_id = document.getElementById("cm_id").value
+                dta.fila_inicio = document.getElementById("row").value
+                dta.col_valor = document.getElementById("cm_valor").value
                 dta.document_blob = new Blob([data])
 
                 $.ajax({
                     type: "POST",
-                    url: "/executeLoadFile",
+                    url: "/executeLoadFileById",
                     async: false,
                     dataType: 'json',
                     contentType: 'application/json',
                     data: JSON.stringify(dta)
                 }).done(function(status){
-                    str = "";
+str = "";
                     for(var i = 0; i < status.no_subido.length; i++){
                         str += status.no_subido[i] + '\n'
                     }
                     
                     document.getElementById("obr").innerText += str 
                     $('.hover_bkgr_fricc').show();           
-                    
-                    });
+                                    });
                 return false
 
             }
 
-        }else{
-            console.log("alv")
         
-           
-            reader.readAsText(file);
-
-            reader.onload = function(file) {
-                console.log(event.target.result)
-                var dta = {};
-                var csv = event.target.result.split(/\n/);
-
-                    dta.document = csv;
-                
-                console.log(csv) 
-                
-                dta.socio = document.getElementById("organizacion").value
-                dta.fecha = document.getElementById("date").value
-                dta.tipo_aparicion = document.getElementById("tipo_aparicion").value
-                dta.nombre = document.getElementById("nombre").value
-                dta.document_blob = new Blob([csv])
-
-                $.ajax({
-                    type: "POST",
-                    url: "/executeLoadFile",
-                    async: false,
-                    dataType: 'json',
-                    contentType: 'application/json',
-                    data: JSON.stringify(dta)
-                }).done(function(status){
-                    str = "";
-                    for(var i = 0; i < status.no_subido.length; i++){
-                        str += status.no_subido[i] + '\n'
-                    }
-                    document.getElementById("obr").innerText += str 
-                    $('.hover_bkgr_fricc').show();
-                });
-                return false
-
-            }
-        }
     }
-    $('.popupCloseButton').click(function(){
-        $('.hover_bkgr_fricc').hide();
-        location.reload()
-    });
+
     ( function ( $ ) {
         "use strict";
         jQuery( '#vmap' ).vectorMap( {
@@ -549,6 +513,11 @@
             normalizeFunction: 'polynomial'
         } );
     } )( jQuery );
+
+    $('.popupCloseButton').click(function(){
+        $('.hover_bkgr_fricc').hide();
+        location.reload()
+    });
 </script>
 
 </body>

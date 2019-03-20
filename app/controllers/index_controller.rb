@@ -14,6 +14,7 @@ class IndexController < ApplicationController
   end
 
   def executeLoadClient
+    
   	cliente = Contratante.create(Id_contratante: params[:id_cliente],Nombre_contratante: params[:nombre_cliente],Correo_contratante: params[:email], Direccion_contratante: params[:direccion],Ciudad_contratante: params[:ciudad])
     tipos_contratante = params[:tipo_usuario]
 
@@ -21,82 +22,155 @@ class IndexController < ApplicationController
       cliente_tipo_contratante = ContratanteTipoContratante.create(id_Contratante: params[:id_cliente], id_Tipo_contratante: id)
     end
   end
+  def executeLoadFileById
+      	data_doc = params[:document]
+    data_no_subida = []
+    for i in 0..(params[:fila_inicio].to_i-1)
+      data_doc.delete(0)
+    end
+    data_doc.each do |row|
+      if(row[params[:col_id].to_i] !=  nil)
+        if(params[:tipo_aparicion].to_i === 1)
+          id_obra = Obra.find_by(Id_obra: row[params[:col_id].to_i])
+        else
+          id_obra = ObraAutoral.find_by(Id_obra: row[params[:col_id].to_i])
+        end
+        
 
+        if(id_obra != nil)
+          id_obra = id_obra.Id_obra
+          precio = row[params[:col_valor].to_i]
+          
+          Time.zone = 'Bogota'
+          aparicion = Aparicion.create(Id_obra: id_obra, Id_reporte: reporte.Id_reporte, Id_socio: id_socio, Duracion: duracion, Cantidad: cantidad, Precio: precio, Fecha: params[:fecha], Territorio: territorio, Id_medio_aparicion: medio_aparicion)
+        else
+          data_no_subida.push(row[params[:col_id].to_i]);
+        end
+      end
+      end
+        render json: {"no_subido": data_no_subida}
+  end
   def executeLoadFile
   	id_socio = params[:socio]
   	data_doc = params[:document]
-    formato = FormatoDocumento.find(id_socio)
-    data_no_subida = []
-    for i in 0..(formato.fila_inicial-1)
-      data_doc.delete(0)
-    end
+    
     nombre_reporte = params[:nombre] + " ( " + params[:fecha] + " ) "
     reporte = Reporte.create(Id_reporte: nil,Doc_reporte:params[:document_blob], Estado_pago: 0, Fecha: params[:fecha], Id_socio: id_socio, Id_tipo_aparicion: params[:tipo_aparicion], Nombre_reporte: nombre_reporte,Comentario: params[:comentario])
     reporte = Reporte.last
-    data_doc.each do |row|
-      if(params[:tipo_aparicion].to_i === 1)
-        id_obra = Obra.find_by(nombre_obra: row[formato.nombre_obra])
-        if(id_obra == nil)
-          wordDic = Diccionario.find_by(nombre_obra: row[formato.nombre_obra])
-          if(wordDic != nil)
-            id_obra = Obra.find_by(nombre_obra: wordDic)
-          end
+          data_no_subida = []
+
+    if(params[:socio].to_i === 6)
+      i = 0
+      puts('longitud ' + data_doc.length.to_s)
+      data_doc.each do |line|
+        if(i == 0)
+          i += 1
+
+          next
         end
-      else
-        id_obra = ObraAutoral.find_by(nombre_obra: row[formato.nombre_obra])
-        if(id_obra == nil)
-          wordDic = Diccionario.find_by(nombre_obra: row[formato.nombre_obra])
-          if(wordDic != nil)
-            id_obra = ObraAutoral.find_by(nombre_obra: wordDic)
+        if(line[47..79] != nil)
+          nombre_obra = line[47..79].strip
+          precio = line[286..295].to_i
+          if(params[:tipo_aparicion].to_i === 1)
+            id_obra = Obra.find_by(nombre_obra: nombre_obra)
+            if(id_obra == nil)
+              wordDic = Diccionario.find_by(entrada: nombre_obra)
+              if(wordDic != nil)
+                id_obra = Obra.find_by(nombre_obra: wordDic)
+              end
+            end
+          else
+            id_obra = ObraAutoral.find_by(nombre_obra: nombre_obra)
+            if(id_obra == nil)
+              wordDic = Diccionario.find_by(entrada: nombre_obra)
+              if(wordDic != nil)
+                id_obra = ObraAutoral.find_by(nombre_obra: wordDic)
+              end
+            end
+          end
+
+          if(id_obra != nil)
+            id_obra = id_obra.Id_obra
+
+            Time.zone = 'Bogota'
+            aparicion = Aparicion.create(Id_obra: id_obra, Id_reporte: reporte.Id_reporte, Id_socio: id_socio, Duracion: nil, Cantidad: nil, Precio: precio, Fecha: params[:fecha], Territorio: nil, Id_medio_aparicion: nil)
+          else
+            data_no_subida.push(nombre_obra)
           end
         end
       end
 
-      if(id_obra != nil)
-        id_obra = id_obra.Id_obra
-        precio = row[formato.precio]
-        if(formato.tipo_aparicion == nil)
-          tipo_aparicion = nil
-        else
-          tipo_aparicion = row[formato.tipo_aparicion]
-        end
-        if(formato.duracion == nil)
-          duracion = nil
-        else
-          duracion = row[formato.duracion]
-        end
-        if(formato.cantidad == nil)
-          cantidad = nil
-        else
-          cantidad = row[formato.cantidad]
-        end
-        if(formato.fecha == nil)
-          fecha = nil
-        else
-          fecha = row[formato.fecha]
-        end
-        if(formato.territorio == nil)
-          territorio = nil
-        else
-          territorio = row[formato.territorio]
-        end
-        if(formato.medio_aparicion == nil)
-          medio_aparicion = nil
-        else
-          medio_aparicion = row[formato.medio_aparicion]
-        end
-        Time.zone = 'Bogota'
-        aparicion = Aparicion.create(Id_obra: id_obra, Id_reporte: reporte.Id_reporte, Id_socio: id_socio, Duracion: duracion, Cantidad: cantidad, Precio: precio, Fecha: params[:fecha], Territorio: territorio, Id_medio_aparicion: medio_aparicion)
-      else
-        data_no_subida.push(row[formato.nombre_obra]);
+      
+    else
+      formato = FormatoDocumento.find(id_socio)
+      data_no_subida = []
+      for i in 0..(formato.fila_inicial-1)
+        data_doc.delete(0)
       end
+      data_doc.each do |row|
+        if(params[:tipo_aparicion].to_i === 1)
+          id_obra = Obra.find_by(nombre_obra: row[formato.nombre_obra])
+          if(id_obra == nil)
+            wordDic = Diccionario.find_by(entrada: row[formato.nombre_obra])
+            if(wordDic != nil)
+              id_obra = Obra.find_by(nombre_obra: wordDic)
+            end
+          end
+        else
+          id_obra = ObraAutoral.find_by(nombre_obra: row[formato.nombre_obra])
+          if(id_obra == nil)
+            wordDic = Diccionario.find_by(entrada: row[formato.nombre_obra])
+            if(wordDic != nil)
+              id_obra = ObraAutoral.find_by(nombre_obra: wordDic)
+            end
+          end
+        end
+        
 
-    end
-    respond_to do |format|
+        if(id_obra != nil)
+          id_obra = id_obra.Id_obra
+          precio = row[formato.precio]
+          if(formato.tipo_aparicion == nil)
+            tipo_aparicion = nil
+          else
+            tipo_aparicion = row[formato.tipo_aparicion]
+          end
+          if(formato.duracion == nil)
+            duracion = nil
+          else
+            duracion = row[formato.duracion]
+          end
+          if(formato.cantidad == nil)
+            cantidad = nil
+          else
+            cantidad = row[formato.cantidad]
+          end
+          if(formato.fecha == nil)
+            fecha = nil
+          else
+            fecha = row[formato.fecha]
+          end
+          if(formato.territorio == nil)
+            territorio = nil
+          else
+            territorio = row[formato.territorio]
+          end
+          if(formato.medio_aparicion == nil)
+            medio_aparicion = nil
+          else
+            medio_aparicion = row[formato.medio_aparicion]
+          end
+          Time.zone = 'Bogota'
+          aparicion = Aparicion.create(Id_obra: id_obra, Id_reporte: reporte.Id_reporte, Id_socio: id_socio, Duracion: duracion, Cantidad: cantidad, Precio: precio, Fecha: params[:fecha], Territorio: territorio, Id_medio_aparicion: medio_aparicion)
+        else
+          data_no_subida.push(row[formato.nombre_obra]);
+        end
 
-      format.html # show.html.erb
-      format.json { render json: data_no_subida }
+      end
+  
     end
+    render json: {"no_subido": data_no_subida}
+
   end
 
   def executeLoadDic
@@ -235,8 +309,9 @@ class IndexController < ApplicationController
       territorio = params[:territorio]
       medio = params[:medio]
       fila = params[:fila]
+      nombre_formato = params[:nombre_formato]
       
-      FormatoDocumento.create(id_socio: organizacion, nombre_obra: nombre, tipo_aparicion: tipo, duracion: duracion, cantidad: cantidad, precio: precio, fecha: fecha, territorio: territorio, medio_aparicion: medio, fila_inicial: fila)
+      FormatoDocumento.create(id_socio: organizacion, nombre_obra: nombre, tipo_aparicion: tipo, duracion: duracion, cantidad: cantidad, precio: precio, fecha: fecha, territorio: territorio, medio_aparicion: medio, fila_inicial: fila, nombre_formato: nombre_formato)
       redirect_to "/index/loadFormat"
     end
 
