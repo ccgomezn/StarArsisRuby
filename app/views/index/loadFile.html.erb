@@ -379,7 +379,49 @@
                                         </div>
 
                                     </div>
+                                    <div class="form-row">
+                                        <div class="col-xs-4 col-sm-4">
+                                            <label>Mas Iva</label>
+                                            <input name="mas_iva" type="text" required value="0" id="mas_iva" class="form-control-file">
+                                            <small class="form-text text-muted">Mas iva</small>
+                                        </div>
+
+                                        <div class="col-xs-4 col-sm-4">
+                                            <label>Iva incluido</label>
+                                            <input name="iva_incluido" type="text" required value="0" id="iva_incluido"  class="form-control-file">
+                                            <small class="form-text text-muted">Iva incluido</small>
+                                        </div>
+
+                                        <div class="col-xs-4 col-sm-4">
+                                            <label>Descuento</label>
+                                            <input name="descuento" type="text" required value="0" id="descuento"  class="form-control-file">
+                                            <small class="form-text text-muted">Descuento</small>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-xs-4 col-sm-4">
+                                            <label>Euro - Dolar</label>
+                                            <input name="euro_dolar" type="text"  value="0" id="euro_dolar" class="form-control-file">
+                                            <small class="form-text text-muted">Euro - Dolar</small>
+                                        </div>
+
+                                        <div class="col-xs-4 col-sm-4">
+                                            <label>Dolar - Peso</label>
+                                            <input name="dolar_peso" type="text"  value="0" id="dolar_peso" class="form-control-file">
+                                            <small class="form-text text-muted">Dolar - Peso</small>
+                                        </div>
+                                        <div class="col-xs-4 col-sm-4">
+                                            <label>Territorio</label>
+                                            <select id="territorio">
+                                                <option value=1>Nacional</option>
+                                                <option value=0>Internacional</option>
+                                            </select>
+                                            <small class="form-text text-muted">Territorio</small>
+                                        </div>
+                                        
+                                    </div>
                                     
+
                                     <div class="form-row">
                                         <div class="col-xs-6 col-sm-6">
                                             <label>Observaciones</label>
@@ -467,7 +509,12 @@
                 dta.tipo_aparicion = document.getElementById("tipo_aparicion").value
                 dta.nombre = document.getElementById("nombre").value
                 dta.document_blob = new Blob([data])
-
+                dta.mas_iva = document.getElementById("mas_iva").value
+                dta.iva_incluido = document.getElementById("iva_incluido").value
+                dta.descuento = document.getElementById("descuento").value
+                dta.euro_dolar = document.getElementById("euro_dolar").value
+                dta.dolar_peso = document.getElementById("dolar_peso").value
+                dta.territorio = document.getElementById("territorio").options[document.getElementById("territorio").selectedIndex].value;
                 $.ajax({
                     type: "POST",
                     url: "/executeLoadFile",
@@ -508,8 +555,13 @@
                 dta.fecha = document.getElementById("date").value
                 dta.tipo_aparicion = document.getElementById("tipo_aparicion").value
                 dta.nombre = document.getElementById("nombre").value
+                dta.mas_iva = document.getElementById("mas_iva").value
+                dta.iva_incluido = document.getElementById("iva_incluido").value
+                dta.descuento = document.getElementById("descuento").value
                 dta.document_blob = new Blob([csv])
-
+dta.euro_dolar = document.getElementById("euro_dolar").value
+                dta.dolar_peso = document.getElementById("dolar_peso").value
+                dta.territorio = document.getElementById("territorio").options[document.getElementById("territorio").selectedIndex].value;
                 $.ajax({
                     type: "POST",
                     url: "/executeLoadFile",

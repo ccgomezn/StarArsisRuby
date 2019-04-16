@@ -55,13 +55,14 @@ class IndexController < ApplicationController
   	data_doc = params[:document]
     
     nombre_reporte = params[:nombre] + " ( " + params[:fecha] + " ) "
-    reporte = Reporte.create(Id_reporte: nil,Doc_reporte:params[:document_blob], Estado_pago: 0, Fecha: params[:fecha], Id_socio: id_socio, Id_tipo_aparicion: params[:tipo_aparicion], Nombre_reporte: nombre_reporte,Comentario: params[:comentario])
+    reporte = Reporte.create(Id_reporte: nil,Doc_reporte:params[:document_blob], Estado_pago: 0, Fecha: params[:fecha], Id_socio: id_socio, Id_tipo_aparicion: params[:tipo_aparicion], Nombre_reporte: nombre_reporte,Comentario: params[:comentario],Mas_iva: params[:mas_iva], Iva_incluido: params[:iva_incluido], Descuento: params[:descuento], EURO_DOLAR: params[:euro_dolar], DOLAR_PESO: params[:dolar_peso], Territorio: params[:territorio])
     reporte = Reporte.last
-          data_no_subida = []
+    data_no_subida = []
 
     if(params[:socio].to_i === 6)
       i = 0
-      puts('longitud ' + data_doc.length.to_s)
+      data_load = []
+      query_nombres = ''
       data_doc.each do |line|
         if(i == 0)
           i += 1
@@ -69,37 +70,69 @@ class IndexController < ApplicationController
           next
         end
         if(line[47..79] != nil)
-          nombre_obra = line[47..79].strip
+          nombre_obra = line[47..79].strip.upcase
+
           precio = (line[286..295].to_i/100.0).round
-          if(params[:tipo_aparicion].to_i === 1)
-            id_obra = Obra.find_by(nombre_obra: nombre_obra)
-            if(id_obra == nil)
-              wordDic = Diccionario.find_by(entrada: nombre_obra)
-              if(wordDic != nil)
-                id_obra = Obra.find_by(nombre_obra: wordDic)
-              end
-            end
+          data_load.push([nombre_obra, precio])
+          if nombre_obra.include? "'"
+            query_nombres = query_nombres + '"'+ nombre_obra + '",'
           else
-            id_obra = ObraAutoral.find_by(nombre_obra: nombre_obra)
-            if(id_obra == nil)
-              wordDic = Diccionario.find_by(entrada: nombre_obra)
-              if(wordDic != nil)
-                id_obra = ObraAutoral.find_by(nombre_obra: wordDic)
-              end
-            end
-          end
+            query_nombres = query_nombres + "'"+ nombre_obra + "',"
 
-          if(id_obra != nil)
-            id_obra = id_obra.Id_obra
-
-            Time.zone = 'Bogota'
-            aparicion = Aparicion.create(Id_obra: id_obra, Id_reporte: reporte.Id_reporte, Id_socio: id_socio, Duracion: nil, Cantidad: nil, Precio: precio, Fecha: params[:fecha], Territorio: nil, Id_medio_aparicion: nil)
-          else
-            data_no_subida.push(nombre_obra)
-          end
+          end        
+        end
+      end
+      query_nombres = query_nombres + "' '"
+      word_dics = Diccionario.where('Entrada IN ('+query_nombres+')')
+      map_word_dics = {}
+      word_dics.each do |row|
+        map_word_dics["#{row.Entrada}"] = row.Salida
+      end
+      data_load.each do |row_data|
+        unless(map_word_dics["#{row_data[0]}"].nil?)
+          row_data[0] = map_word_dics["#{row_data[0]}"]
         end
       end
 
+      query_nombres = ''
+      data_load.each do |row_data|
+          if row_data[0].include? "'"
+            query_nombres = query_nombres + '"'+ row_data[0] + '",'
+          else
+            query_nombres = query_nombres + "'"+ row_data[0] + "',"
+
+          end           end
+      query_nombres = query_nombres + "' '"
+      if(params[:tipo_aparicion].to_i === 1)
+
+        data_songs_load = Obra.where('Nombre_obra IN ('+query_nombres+')')
+      else
+        data_songs_load = ObraAutoral.where('Nombre_obra IN ('+query_nombres+')')
+      end
+      map_song_dics = {}
+      data_songs_load.each do |row|
+        map_song_dics["#{row.Nombre_obra}"] = row.Id_obra
+      end
+      data_load.each do |row_data|
+        if (!map_song_dics["#{row_data[0]}"].nil?)
+          row_data[0] = map_song_dics["#{row_data[0]}"]
+          row_data[2] = 1
+        else
+          row_data[2] = 0
+        end
+      end
+      data_real_to_load = []
+
+      data_load.each do |row_data|
+        if (row_data[2] == 1)
+          data_real_to_load.push([row_data[0], reporte.Id_reporte, id_socio, row_data[1], params[:fecha]])
+        else
+          data_no_subida.push(row_data[0])
+        end
+      end
+      columns = [:Id_obra, :Id_reporte, :Id_socio, :Precio, :Fecha]
+
+      Aparicion.import columns, data_real_to_load
       
     else
       formato = FormatoDocumento.find(id_socio)
@@ -107,28 +140,13 @@ class IndexController < ApplicationController
       for i in 0..(formato.fila_inicial-1)
         data_doc.delete(0)
       end
+      data_load = []
+      slq_obr_dic = ''
       data_doc.each do |row|
-        if(params[:tipo_aparicion].to_i === 1)
-          id_obra = Obra.find_by(nombre_obra: row[formato.nombre_obra])
-          if(id_obra == nil)
-            wordDic = Diccionario.find_by(entrada: row[formato.nombre_obra])
-            if(wordDic != nil)
-              id_obra = Obra.find_by(nombre_obra: wordDic)
-            end
-          end
-        else
-          id_obra = ObraAutoral.find_by(nombre_obra: row[formato.nombre_obra])
-          if(id_obra == nil)
-            wordDic = Diccionario.find_by(entrada: row[formato.nombre_obra])
-            if(wordDic != nil)
-              id_obra = ObraAutoral.find_by(nombre_obra: wordDic)
-            end
-          end
-        end
-        
+        nombre_obra = row[formato.nombre_obra]
+        unless(nombre_obra.nil? or nombre_obra == '')
+        nombre_obra = nombre_obra.upcase
 
-        if(id_obra != nil)
-          id_obra = id_obra.Id_obra
           precio = row[formato.precio]
           if(formato.tipo_aparicion == nil)
             tipo_aparicion = nil
@@ -160,13 +178,71 @@ class IndexController < ApplicationController
           else
             medio_aparicion = row[formato.medio_aparicion]
           end
-          Time.zone = 'Bogota'
-          aparicion = Aparicion.create(Id_obra: id_obra, Id_reporte: reporte.Id_reporte, Id_socio: id_socio, Duracion: duracion, Cantidad: cantidad, Precio: precio, Fecha: params[:fecha], Territorio: territorio, Id_medio_aparicion: medio_aparicion)
-        else
-          data_no_subida.push(row[formato.nombre_obra]);
-        end
+          if nombre_obra.include? "'"
+            slq_obr_dic = slq_obr_dic + '"'+ nombre_obra + '",'
+          else
+            slq_obr_dic = slq_obr_dic + "'"+ nombre_obra + "',"
 
+          end
+
+          data_load.push([nombre_obra,precio,duracion,cantidad,params[:fecha],territorio,medio_aparicion])
+      
+        end
       end
+
+        slq_obr_dic = slq_obr_dic + '" "'
+        word_dics = Diccionario.where('Entrada IN ('+slq_obr_dic+')')
+      map_word_dics = {}
+      word_dics.each do |row|
+        map_word_dics["#{row.Entrada}"] = row.Salida
+      end
+      data_load.each do |row_data|
+        unless(map_word_dics["#{row_data[0]}"].nil?)
+          row_data[0] = map_word_dics["#{row_data[0]}"]
+        end
+      end
+
+      query_nombres = ''
+      data_load.each do |row_data|
+      if row_data[0].include? "'"
+            query_nombres = query_nombres + '"'+ row_data[0] + '",'
+          else
+            query_nombres = query_nombres + "'"+ row_data[0] + "',"
+
+          end      
+        end
+      query_nombres = query_nombres + "' '"
+      if(params[:tipo_aparicion].to_i === 1)
+
+        data_songs_load = Obra.where('Nombre_obra IN ('+query_nombres+')')
+      else
+        data_songs_load = ObraAutoral.where('Nombre_obra IN ('+query_nombres+')')
+      end
+      map_song_dics = {}
+      data_songs_load.each do |row|
+        map_song_dics["#{row.Nombre_obra}"] = row.Id_obra
+      end
+      data_load.each do |row_data|
+        if (!map_song_dics["#{row_data[0]}"].nil?)
+          row_data[0] = map_song_dics["#{row_data[0]}"]
+          row_data[7] = 1
+        else
+          row_data[7] = 0
+        end
+      end
+      data_real_to_load = []
+
+      data_load.each do |row_data|
+        if (row_data[7] == 1)
+          data_real_to_load.push([row_data[0], reporte.Id_reporte, id_socio, row_data[1],row_data[2],row_data[3],row_data[4],row_data[5],row_data[6]])
+        else
+          data_no_subida.push(row_data[0])
+        end
+      end
+      columns = [:Id_obra, :Id_reporte, :Id_socio, :Precio, :Duracion, :Cantidad, :Fecha, :Territorio, :Id_medio_aparicion]
+
+      Aparicion.import columns, data_real_to_load
+
   
     end
     render json: {"no_subido": data_no_subida}
@@ -182,7 +258,7 @@ class IndexController < ApplicationController
     
     workbook = RubyXL::Workbook.new
     worksheet = workbook.add_worksheet('liquidacion')
-      headers = ['id obra', 'obra', 'id autor','nombre autor', 'grupo interprete', 'territorio', 'porcentaje_autor', 'porcentaje_editora','valor reportado', 'valor editora', 'valor autor' , 'catalogo']
+      headers = ['id obra', 'obra', 'id autor','nombre autor', 'territorio', 'porcentaje_autor', 'porcentaje_editora','valor reportado', 'valor editora', 'valor autor' , 'catalogo']
       col = 0
 
       headers.each do |hd|
@@ -192,22 +268,28 @@ class IndexController < ApplicationController
       
       row = 1
       for i in 0..(params[:n_reports].to_i-1)
+
         id_reporte = params[:"report_#{i}"]
-        iva_incluido = params[:"iva_incluido#{i}"]
-        mas_iva = params[:"mas_iva#{i}"]
+        reporte = Reporte.find(id_reporte)
+        iva_incluido = reporte.Iva_incluido
+        mas_iva = reporte.Mas_iva
+        descuento = reporte.Descuento
         Aparicion.where("Id_reporte = ?", id_reporte).each do |aparicion|
           id_obra = aparicion.Id_obra
           price = aparicion.Precio
-          price = price/(1+(iva_incluido.to_f)/100.0)
-          price = price - price*(mas_iva.to_f)/100.0
+          price = price/(1+(iva_incluido.to_f))
+          price = price - price*(mas_iva.to_f)
+          price = price - price*(descuento.to_f)
           obra = ObraAutoral.where("Id_obra=? AND Catalogo=?", id_obra, params[:catalogo])[0]
           if(obra != nil)
-            if(aparicion.Territorio == 'Colombia' || aparicion.Territorio == nil)
+            if(reporte.Territorio == 1)
               porcentaje_autor = obra.Porcentaje_colombia
               porcentaje_editora = obra.Porcentaje_editora_colombia
+              territorio = 'Nacional'
             else
               porcentaje_autor = obra.Porcentaje_internacional
               porcentaje_editora = obra.Porcentaje_editora_internacional
+              territorio = 'Internacional'
               
             end
             if(Contratante.find_by(Id_contratante: obra.Autor_id) != nil)
@@ -217,11 +299,9 @@ class IndexController < ApplicationController
               nombre_contratante = 'Autor no reconocido'
             end
                 price_editora = porcentaje_editora*price
-                price_editora = price_editora - (price_editora*params[:descuento].to_f/100.0)
                 price_autor = porcentaje_autor*price
-                price_autor = price_autor - (price_autor*params[:descuento].to_f/100.0)
                 
-                data = [id_obra, obra.Nombre_obra,obra.Autor_id ,nombre_contratante, Agrupacion.find(obra.Grupo).Nombre_grupo, aparicion.Territorio,porcentaje_autor,porcentaje_editora, price, price_editora, price_autor, obra.Catalogo ]
+                data = [id_obra, obra.Nombre_obra,obra.Autor_id ,nombre_contratante, territorio,porcentaje_autor,porcentaje_editora, price.to_i, price_editora.to_i, price_autor.to_i, obra.Catalogo ]
                 
 
                 col = 0
@@ -245,29 +325,38 @@ class IndexController < ApplicationController
     
     workbook = RubyXL::Workbook.new
     worksheet = workbook.add_worksheet('liquidacion')
-      headers = ['id obra', 'obra', 'id autor','nombre autor', 'grupo interprete', 'territorio', 'porcentaje_autor', 'porcentaje_editora','valor reportado', 'valor editora', 'valor autor' , 'catalogo']
+      headers = ['id obra', 'obra', 'id autor','nombre autor', 'territorio', 'porcentaje_autor', 'porcentaje_editora','valor reportado', 'valor editora', 'valor autor' , 'catalogo']
       col = 0
 
       headers.each do |hd|
         worksheet.add_cell(0,col,hd)
         col += 1
       end
-      usuario = params[:id_usuario]
+      usuario = params[:usuario]
       fecha_i = params[:fecha_inicio]
       fecha_f = params[:fecha_fin]
       row = 1
         Aparicion.joins(" INNER JOIN Obra_autoral ON Aparicion.Id_obra = Obra_autoral.Id_obra").where("Obra_autoral.Autor_id = ? AND Aparicion.fecha >= ? AND Aparicion.fecha <= ?", usuario, fecha_i, fecha_f).each do |aparicion|
           id_obra = aparicion.Id_obra
-          price = aparicion.Precio/1.19
-          obra = ObraAutoral.where("Id_obra=? AND Catalogo=?", id_obra)[0]
+          id_reporte = aparicion.Id_reporte
+          reporte = Reporte.find(id_reporte)
+          iva_incluido = reporte.Iva_incluido
+          mas_iva = reporte.Mas_iva
+          descuento = reporte.Descuento
+          price = aparicion.Precio
+          price = price/(1+(iva_incluido.to_f))
+          price = price - price*(mas_iva.to_f)
+          price = price - price*(descuento.to_f)
+          obra = ObraAutoral.where("Id_obra=?", id_obra)[0]
           if(obra != nil)
-            if(aparicion.Territorio == 'Colombia' || aparicion.Territorio == nil)
+            if(reporte.Territorio == 1)
               porcentaje_autor = obra.Porcentaje_colombia
               porcentaje_editora = obra.Porcentaje_editora_colombia
+              territorio = 'Nacional'
             else
               porcentaje_autor = obra.Porcentaje_internacional
               porcentaje_editora = obra.Porcentaje_editora_internacional
-              
+              territorio = 'Internacional'
             end
             if(Contratante.find_by(Id_contratante: obra.Autor_id) != nil)
                 nombre_contratante = Contratante.find_by(Id_contratante: obra.Autor_id).Nombre_contratante
@@ -276,11 +365,9 @@ class IndexController < ApplicationController
               nombre_contratante = 'Autor no reconocido'
             end
                 price_editora = porcentaje_editora*price
-                price_editora = price_editora - (price_editora*params[:descuento].to_f/100.0)
                 price_autor = porcentaje_autor*price
-                price_autor = price_autor - (price_autor*params[:descuento].to_f/100.0)
                 
-                data = [id_obra, obra.Nombre_obra,obra.Autor_id ,nombre_contratante, Agrupacion.find(obra.Grupo).Nombre_grupo, aparicion.Territorio,porcentaje_autor,porcentaje_editora, price, price_editora, price_autor, obra.Catalogo ]
+                data = [id_obra, obra.Nombre_obra,obra.Autor_id ,nombre_contratante, territorio,porcentaje_autor,porcentaje_editora, price.to_i, price_editora.to_i, price_autor.to_i, obra.Catalogo ]
                 
 
                 col = 0
@@ -358,11 +445,17 @@ class IndexController < ApplicationController
     end
     def deleteAutoral
       Reporte.find(params[:id]).destroy
+      Aparicion.where("Id_reporte =?", params[:id]).each do |ap|
+        Aparicion.find(ap.Id_aparicion).destroy
+      end
       redirect_to "/index/liquidar"
 
     end
     def deleteFonografico
       Reporte.find(params[:id]).destroy
+      Aparicion.where("Id_reporte =?", params[:id]).each do |ap|
+        Aparicion.find(ap.Id_aparicion).destroy
+      end      
       redirect_to "/index/liquidar_fonografico"
 
     end
@@ -381,26 +474,28 @@ class IndexController < ApplicationController
         row = 1
         for i in 0..(params[:n_reports].to_i-1)
             id_reporte = params[:"report_#{i}"]
-            iva_incluido = params[:"iva_incluido#{i}"]
-            mas_iva = params[:"mas_iva#{i}"]          
+            reporte = Reporte.find(id_reporte)
+            iva_incluido = reporte.Iva_incluido
+            mas_iva = reporte.Mas_iva
+            descuento = reporte.Descuento
+            euro =reporte.EURO_DOLAR
+            dolar = reporte.DOLAR_PESO
             Aparicion.where("Id_reporte = ?", id_reporte).each do |aparicion|
             id_obra = aparicion.Id_obra
-            price = aparicion.Precio
-            price = price/(1+(iva_incluido.to_f)/100.0)
-            price = price - price*(mas_iva.to_f)/100.0
+            price = aparicion.Precio*euro*dolar
+            price = price/(1+(iva_incluido.to_f))
+            price = price - price*(mas_iva.to_f)
+            price = price - price*(descuento.to_f)
             obra = Obra.where("Id_obra=? AND Editora=?", id_obra, params[:catalogo])[0]
             if(obra != nil)
               porcentaje_interprete = obra.Porcentaje_interprete_fon
               porcentaje_editora = obra.Porcentaje_editora_fon
               porcentaje_subeditora = obra.Porcentaje_subeditor_fon
-              valor_subeditor = price*porcentaje_subeditora;
-              valor_subeditor -= valor_subeditor*params[:descuento].to_f/100.0
+              valor_subeditor = price*porcentaje_subeditora
               valor_tot = price - valor_subeditor
               valor_editora = valor_tot*porcentaje_editora
-              valor_editora -= valor_editora*params[:descuento].to_f/100.0
               valor_interprete = valor_tot*porcentaje_interprete
-              valor_interprete -= valor_interprete*params[:descuento].to_f/100.0
-              data = [id_obra, obra.Nombre_obra, Agrupacion.find(obra.Id_grupo).Nombre_grupo, aparicion.Territorio,porcentaje_interprete, porcentaje_editora,porcentaje_subeditora,price , valor_subeditor ,valor_editora, valor_interprete, obra.Editora  ]
+              data = [id_obra, obra.Nombre_obra, Agrupacion.find(obra.Id_grupo).Nombre_grupo, aparicion.Territorio,porcentaje_interprete, porcentaje_editora,porcentaje_subeditora,price.to_i , valor_subeditor.to_i ,valor_editora.to_i, valor_interprete.to_i, obra.Editora  ]
     
               col = 0
               data.each do |cl|
@@ -420,7 +515,7 @@ class IndexController < ApplicationController
     
       workbook = RubyXL::Workbook.new
       worksheet = workbook.add_worksheet('liquidacion')
-        headers = ['id obra', 'obra', 'grupo interprete', 'territorio', 'porcentaje interprete', 'porcentaje editora', 'porcentaje sub editora','valor reportado', 'valor sub editora', 'valor editora', 'valor interprete' , 'editora']
+        headers = ['id obra', 'obra', 'grupo interprete', 'persona grupo', 'territorio', 'porcentaje interprete', 'porcentaje editora', 'porcentaje sub editora','valor reportado', 'valor sub editora', 'valor editora', 'valor interprete' , 'editora']
         col = 0
   
         headers.each do |hd|
@@ -431,9 +526,37 @@ class IndexController < ApplicationController
         fecha_i = params[:fecha_inicio]
         fecha_f = params[:fecha_fin]
         row = 1
+        grupo = GrupoContratante.joins(" INNER JOIN Contratante ON Grupo_contratante.Id_contratante = Contratante.Id_contratante").where("Grupo_contratante.Id_grupo = ?", usuario)
+        grupo_real = []
+        ln = 0
+        if(grupo == nil)
+          grupo_real = ["Integrantes no identificados"]
+                  ln = 1
+        else
+          grupo.each do |integrante|
+            grupo_real.push(Contratante.find(integrante.Id_contratante.to_i).Nombre_contratante)
+            ln += 1
+          end
+
+        puts grupo
+        puts grupo_real
+        end
+        
         Aparicion.joins(" INNER JOIN Obra ON Aparicion.Id_obra = Obra.Id_obra").where("Obra.Id_grupo = ? AND Aparicion.fecha >= ? AND Aparicion.fecha <= ?", usuario, fecha_i, fecha_f).each do |aparicion|
             id_obra = aparicion.Id_obra
-            price = aparicion.Precio*params[:euro].to_f*params[:dolar].to_f/1.19
+
+            id_reporte = aparicion.Id_reporte
+          reporte = Reporte.find(id_reporte)
+          iva_incluido = reporte.Iva_incluido
+          mas_iva = reporte.Mas_iva
+          descuento = reporte.Descuento
+          euro =reporte.EURO_DOLAR
+            dolar = reporte.DOLAR_PESO
+            price = aparicion.Precio*dolar*euro/ln
+          
+          price = price/(1+(iva_incluido.to_f))
+          price = price - price*(mas_iva.to_f)
+          price = price - price*(descuento.to_f)
             obra = Obra.where("Id_obra=?", id_obra)[0]
             if(obra != nil)
               porcentaje_interprete = obra.Porcentaje_interprete_fon
@@ -446,14 +569,17 @@ class IndexController < ApplicationController
               valor_editora -= valor_editora*params[:descuento].to_f/100.0
               valor_interprete = valor_tot*porcentaje_interprete
               valor_interprete -= valor_interprete*params[:descuento].to_f/100.0
-              data = [id_obra, obra.Nombre_obra, Agrupacion.find(obra.Id_grupo).Nombre_grupo, aparicion.Territorio,porcentaje_interprete, porcentaje_editora,porcentaje_subeditora,price , valor_subeditor ,valor_editora, valor_interprete, obra.Editora  ]
-    
-              col = 0
+              grupo_real.each do |interprete|
+
+                data = [id_obra, obra.Nombre_obra, Agrupacion.find(obra.Id_grupo).Nombre_grupo, interprete, aparicion.Territorio,porcentaje_interprete, porcentaje_editora,porcentaje_subeditora,price.to_i , valor_subeditor.to_i ,valor_editora.to_i, valor_interprete.to_i, obra.Editora  ]
+                col = 0
               data.each do |cl|
                 worksheet.add_cell(row,col,cl)
                 col += 1
               end
               row += 1
+              end
+              
             end
             
           end
