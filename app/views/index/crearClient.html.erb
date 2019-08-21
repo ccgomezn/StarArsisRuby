@@ -20,7 +20,6 @@
     <!-- <link rel="stylesheet" href="assets/css/bootstrap-select.less"> -->
     <%= stylesheet_link_tag "jqvmap.min.css" %>
     <%= stylesheet_link_tag "https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800" %>
-    <%= stylesheet_link_tag "https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/b-flash-1.5.4/b-html5-1.5.4/b-print-1.5.4/r-2.2.2/datatables.min.css" %>
 
 
     <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/html5shiv/3.7.3/html5shiv.min.js"></script> -->
@@ -30,8 +29,7 @@
 
 
         <!-- Left Panel -->
-
-    <aside id="left-panel" class="left-panel">
+ <aside id="left-panel" class="left-panel">
         <nav class="navbar navbar-expand-sm navbar-default">
 
             <div class="navbar-header">
@@ -48,7 +46,7 @@
                         <a href="/index/index"> <i class="menu-icon fa fa-dashboard"></i>Dashboard </a>
                     </li>
                     <h3 class="menu-title">Liquidación</h3><!-- /.menu-title -->
-                    <li >
+                    <li class="">
                         <a href="/index/loadFile" > <i class="menu-icon fa fa-laptop"></i>Cargar archivo</a>
 
                     </li>
@@ -78,7 +76,7 @@
                     </li>
                     -->
 
-                    <h3 class="menu-title">Consultas y reportes</h3><!-- /.menu-title -->
+                   <h3 class="menu-title">Consultas y reportes</h3><!-- /.menu-title -->
 
                     <li >
                         <a href="/index/loadClient"> <i class="menu-icon fa fa-tasks"></i>Clientes</a>
@@ -238,13 +236,11 @@
             </div>
 
         </header><!-- /header -->
-        <!-- Header-->
-        <!-- Header-->
         <div class="breadcrumbs">
             <div class="col-sm-4">
                 <div class="page-header float-left">
                     <div class="page-title">
-                        <h1>Clientes</h1>
+                        <h1>Agregar Nuevo Cliente</h1>
                     </div>
                 </div>
             </div>
@@ -252,55 +248,94 @@
                 <div class="page-header float-right">
                     <div class="page-title">
                         <ol class="breadcrumb text-right">
-                            <li class="active">Clientes</li>
+                            <li class="active">Agregar Nuevo Cliente</li>
                         </ol>
                     </div>
                 </div>
             </div>
         </div>
+
         <div class="content mt-3">
             <div class="animated fadeIn">
-                <div class="row">
-
-                        <div class="col-xs-12 col-sm-12">
+                <form action="/executeLoadClient" method="POST" class="col-xs-12 col-sm-12">
+                    <div class="row">
+                        <div class="col-xs-6 col-sm-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <strong>Clientes</strong> <small></small>
+                                    <strong>Creación</strong> <small>nuevo cliente</small>
                                 </div>
-
-
-
-                                    <div class="card-body card-block">
-                                <input type="submit" value="Crear cliente" class="btn btn-success"
-    onclick="window.location='/index/crearClient';"/>
-                                        <table id="obras_fono" class="display">
-                                        <thead>
-                                            <th>Nombre del cliente</th>
-                                            <th>Id del cliente</th>
-                                            <th>Correo</th>
-                                            <th>Dirección</th>
-                                            <th>Ciudad</th>
-                                            <th>Celular</th>
-                                        </thead>
-                                            <% @clientes.each do |p| %>
-                                                <tr>
-                                                    <td><%= p.Nombre_contratante%></td>
-                                                                                                        <td><%= p.Id_contratante%></td>
-                                                    <td><%= p.Correo_contratante%></td>
-                                                    <td><%= p.Direccion_contratante%></td>
-                                                    <td><%= p.Ciudad_contratante%></td>
-                                                    <td><%= p.Celular%></td>
-
-                                                </td>
-                                            <% end %>
-                                        </table>
+                                <div class="card-body card-block">
+                                    <div class="form-group">
+                                        <label class=" form-control-label">ID Cliente</label>
+                                        <div class="input-group">
+                                            <div class="input-group-addon"><i class="fa fa-list-ol"></i></div>
+                                            <input name="id_cliente" class="form-control" required>
+                                        </div>
+                                        <small class="form-text text-muted">Número de indentificación unico de cliente</small>
                                     </div>
+                                    <div class="form-group">
+                                        <label class=" form-control-label">Nombre Cliente</label>
+                                        <div class="input-group">
+                                            <div class="input-group-addon"><i class="fa fa-id-card-o"></i></div>
+                                            <input name="nombre_cliente" class="form-control" required>
+                                        </div>
+                                        <small class="form-text text-muted">Nombre del cliente</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class=" form-control-label">Correo Electrónico</label>
+                                        <div class="input-group">
+                                            <div class="input-group-addon"><i class="fa fa-envelope-o"></i></div>
+                                            <input name="email" type="email" class="form-control" required>
+                                        </div>
+                                        <small class="form-text text-muted">E-mail del cliente</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class=" form-control-label">Teléfono</label>
+                                        <div class="input-group">
+                                            <div class="input-group-addon"><i class="fa fa-volume-control-phone"></i></div>
+                                            <input name="telefono" type="tel" class="form-control" required>
+                                        </div>
+                                        <small class="form-text text-muted">Teléfono de cliente</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-
+                        <div class="col-xs-6 col-sm-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <strong class="card-title">Tipo de Usuario</strong>
+                                </div>
+                                <div class="card-body">
+                                      <%= select_tag "tipo_usuario", options_from_collection_for_select(TipoContratante.all, :Id_tipo_contratante, :Nombre_tipo_contratante), {:class=>'standardSelect', :prompt => 'Tipo usuario', :multiple => true}  %>
+                                    <small class="form-text text-muted">seleccione el tipo de cliente</small>
+                                </div>
+                                <div class="card-body card-block">
+                                    <div class="form-group">
+                                        <label class=" form-control-label">Dirección</label>
+                                        <div class="input-group">
+                                            <div class="input-group-addon"><i class="fa fa-map-marker"></i></div>
+                                            <input class="form-control" required name="direccion">
+                                        </div>
+                                        <small class="form-text text-muted">Dirección de contacto de cliente</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class=" form-control-label">Ciudad</label>
+                                        <div class="input-group">
+                                            <div class="input-group-addon"><i class="fa fa-map-signs"></i></div>
+                                            <input class="form-control" required name="ciudad">
+                                        </div>
+                                        <small class="form-text text-muted">Ciudad del cliente</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                              <i class="fa fa-dot-circle-o"></i> Registrar cliente
+                            </button>
+                                </div>
+                            </div>
+                        </div>
                     </form>
                 </div>
+
+
             </div><!-- .animated -->
         </div> <!-- .content -->
     </div><!-- /#right-panel -->
@@ -319,16 +354,8 @@
     <%= javascript_include_tag('jquery.vmap.min.js') %>
     <%= javascript_include_tag('jquery.vmap.sampledata.js') %>
     <%= javascript_include_tag('jquery.vmap.world.js') %>
-    <%= javascript_include_tag("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js") %>
-    <%= javascript_include_tag("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js") %>
-    <%= javascript_include_tag("https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/b-flash-1.5.4/b-html5-1.5.4/b-print-1.5.4/r-2.2.2/datatables.min.js") %>
 
-    <%= javascript_include_tag("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js") %>
-    <%= javascript_include_tag("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js") %>
-    <%= javascript_include_tag("https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/b-flash-1.5.4/b-html5-1.5.4/b-print-1.5.4/r-2.2.2/datatables.min.js")%>
     <script>
-
-
         ( function ( $ ) {
             "use strict";
 
@@ -348,9 +375,11 @@
     </script>
         <script>
         jQuery(document).ready(function() {
-
-
-                jQuery('#obras_fono').DataTable();
+            jQuery(".standardSelect").chosen({
+                disable_search_threshold: 10,
+                no_results_text: "Oops, nothing found!",
+                width: "100%"
+            });
         });
     </script>
 

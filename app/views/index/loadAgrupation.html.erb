@@ -20,6 +20,7 @@
     <!-- <link rel="stylesheet" href="assets/css/bootstrap-select.less"> -->
     <%= stylesheet_link_tag "jqvmap.min.css" %>
     <%= stylesheet_link_tag "https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800" %>
+    <%= stylesheet_link_tag "https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/b-flash-1.5.4/b-html5-1.5.4/b-print-1.5.4/r-2.2.2/datatables.min.css" %>
 
 
     <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/html5shiv/3.7.3/html5shiv.min.js"></script> -->
@@ -29,7 +30,8 @@
 
 
         <!-- Left Panel -->
- <aside id="left-panel" class="left-panel">
+
+    <aside id="left-panel" class="left-panel">
         <nav class="navbar navbar-expand-sm navbar-default">
 
             <div class="navbar-header">
@@ -46,25 +48,25 @@
                         <a href="/index/index"> <i class="menu-icon fa fa-dashboard"></i>Dashboard </a>
                     </li>
                     <h3 class="menu-title">Liquidación</h3><!-- /.menu-title -->
-                    <li class="">
+                    <li >
                         <a href="/index/loadFile" > <i class="menu-icon fa fa-laptop"></i>Cargar archivo</a>
-                       
+
                     </li>
                     <li>
                         <a href="/index/liquidar"> <i class="menu-icon fa fa-table"></i>Liquidar archivo autoral</a>
-                       
+
                     </li>
                     <li>
                         <a href="/index/liquidar_fonografico"> <i class="menu-icon fa fa-table"></i>Liquidar archivo fonografico</a>
-                       
+
                     </li>
                     <li>
                         <a href="/index/liquidar_general_autor"> <i class="menu-icon fa fa-table"></i>Liquidación general autoral</a>
-                       
+
                     </li>
                     <li>
                         <a href="/index/liquidar_general_fonografico"> <i class="menu-icon fa fa-table"></i>Liquidación general fonografico</a>
-                       
+
                     </li>
                     <!--
                     <li class="menu-item-has-children dropdown">
@@ -75,12 +77,12 @@
                         </ul>
                     </li>
                     -->
-                    
+
                     <h3 class="menu-title">Consultas y reportes</h3><!-- /.menu-title -->
 
                     <li >
                         <a href="/index/loadClient"> <i class="menu-icon fa fa-tasks"></i>Clientes</a>
-                        
+
                     </li>
                     <li>
                         <a href="/index/loadAgrupation"> <i class="menu-icon fa fa-tasks"></i>Agrupación</a>
@@ -242,7 +244,7 @@
             <div class="col-sm-4">
                 <div class="page-header float-left">
                     <div class="page-title">
-                        <h1>Agregar nueva agrupación</h1>
+                        <h1>Agrupaciones</h1>
                     </div>
                 </div>
             </div>
@@ -250,7 +252,7 @@
                 <div class="page-header float-right">
                     <div class="page-title">
                         <ol class="breadcrumb text-right">
-                            <li class="active">Agregar nueva agrupación</li>
+                            <li class="active">Agrupaciones</li>
                         </ol>
                     </div>
                 </div>
@@ -259,66 +261,40 @@
         <div class="content mt-3">
             <div class="animated fadeIn">
                 <div class="row">
-                    <form action="/executeLoadAgrupation" method="POST" class="col-xs-12 col-sm-12">
 
-                        <div class="col-xs-6 col-sm-6">
+                        <div class="col-xs-12 col-sm-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <strong>Creación</strong> <small> Nueva agrupación</small>
+                                    <strong>Agrupaciones</strong> <small></small>
                                 </div>
 
 
 
                                     <div class="card-body card-block">
-                                        <div class="form-group">
-                                            <label class=" form-control-label">ID Agrupación</label>
-                                            <div class="input-group">
-                                                <div class="input-group-addon"><i class="fa fa-list-ol"></i></div>
-                                                <input class="form-control" name="id_agrupacion">
-                                            </div>
-                                            <small class="form-text text-muted">Número de indentificación unico de agrupación</small>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class=" form-control-label">Nombre</label>
-                                            <div class="input-group">
-                                                <div class="input-group-addon"><i class="fa fa-users"></i></div>
-                                                <input class="form-control" name="nombre_agrupacion">
-                                            </div>
-                                            <small class="form-text text-muted">Nombre de la Agrupación</small>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class=" form-control-label">Género</label>
-                                            <div class="input-group" name="genero">
+                                <input type="submit" value="Crear agrupación" class="btn btn-success"
+    onclick="window.location='/index/crearGrupo';"/>
+                                        <table id="obras_fono" class="display">
+                                        <thead>
+                                            <th>Nombre agrupación</th>
+                                            <th>Codigo agrupación</th>
+                                            <th>Genero</th>
+                                            <th>Tipo de banda</th>
+                                        </thead>
+                                            <% @clientes.each do |p| %>
+                                                <tr>
+                                                    <td><%= p["Nombre_grupo"]%></td>
+                                                     <td><%= p["Id_grupo"]%></td>
+                                                    <td><%= p["Id_genero"]%></td>
+                                                    <td><%= p["Id_tipo_banda"]%></td>
 
-                                                <%= select_tag "id_genero", options_from_collection_for_select(GeneroMusical.all, :Id_genero, :Nombre_genero), {:class=>'standardSelect', :prompt => 'Género musical'}  %>
-                                            </div>
-                                            <label class=" form-control-label">Tipo de agrupación</label>
-
-                                            <div class="input-group" name="tipo">
-
-                                                <%= select_tag "id_tipo_agrupacion", options_from_collection_for_select(TipoAgrupacion.all, :Id_tipo_banda, :Nombre_tipo_banda), {:class=>'standardSelect', :prompt => 'Tipo de agrupación'}  %>
-                                            </div>
-                                        </div>
+                                                </td>
+                                            <% end %>
+                                        </table>
                                     </div>
                             </div>
                         </div>
 
-                        <div class="col-xs-6 col-sm-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <strong class="card-title">Integrantes de la Agrupación</strong>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <%= select_tag "integrantes", options_from_collection_for_select(Contratante.all, :Id_contratante, :Nombre_contratante), {:class=>'standardSelect', :prompt => 'Integrantes', :multiple => true}  %>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn btn-primary btn-sm">
-                          <i class="fa fa-dot-circle-o"></i> Registrar Agrupación</button>
-                            </div>
-                        </div>
+
                     </form>
                 </div>
             </div><!-- .animated -->
@@ -339,7 +315,16 @@
     <%= javascript_include_tag('jquery.vmap.min.js') %>
     <%= javascript_include_tag('jquery.vmap.sampledata.js') %>
     <%= javascript_include_tag('jquery.vmap.world.js') %>
+    <%= javascript_include_tag("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js") %>
+    <%= javascript_include_tag("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js") %>
+    <%= javascript_include_tag("https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/b-flash-1.5.4/b-html5-1.5.4/b-print-1.5.4/r-2.2.2/datatables.min.js") %>
+
+    <%= javascript_include_tag("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js") %>
+    <%= javascript_include_tag("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js") %>
+    <%= javascript_include_tag("https://cdn.datatables.net/v/bs4/jszip-2.5.0/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/b-flash-1.5.4/b-html5-1.5.4/b-print-1.5.4/r-2.2.2/datatables.min.js")%>
     <script>
+
+
         ( function ( $ ) {
             "use strict";
 
@@ -359,11 +344,9 @@
     </script>
         <script>
         jQuery(document).ready(function() {
-            jQuery(".standardSelect").chosen({
-                disable_search_threshold: 10,
-                no_results_text: "Oops, nothing found!",
-                width: "100%"
-            });
+
+
+                jQuery('#obras_fono').DataTable();
         });
     </script>
 

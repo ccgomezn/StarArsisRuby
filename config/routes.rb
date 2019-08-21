@@ -12,6 +12,8 @@ Rails.application.routes.draw do
 
   get 'index/loadFormat'
   get 'index/obrasFono'
+  get 'index/crearClient'
+  get 'index/crearGrupo'
   get 'index/obrasAutorales'
   get 'index/editarObraAutoral'
   get 'index/editarObraFono'
