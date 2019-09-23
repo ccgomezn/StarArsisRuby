@@ -1,5 +1,5 @@
 GEM
-  remote: https://rubygems.org/
+  remote: http://rubygems.org/
   specs:
     actioncable (5.2.1)
       actionpack (= 5.2.1)
@@ -52,8 +52,6 @@ GEM
     autoprefixer-rails (9.3.1)
       execjs
     bindex (0.5.0)
-    bootsnap (1.3.2)
-      msgpack (~> 1.0)
     bootstrap (4.1.3)
       autoprefixer-rails (>= 6.0.3)
       popper_js (>= 1.12.9, < 2)
@@ -117,7 +115,6 @@ GEM
     mini_mime (1.0.1)
     mini_portile2 (2.3.0)
     minitest (5.11.3)
-    msgpack (1.2.4)
     multi_json (1.13.1)
     mysql2 (0.5.2)
     nio4r (2.3.1)
@@ -216,7 +213,6 @@ PLATFORMS
 
 DEPENDENCIES
   activerecord-import
-  bootsnap (>= 1.1.0)
   bootstrap
   byebug
   capybara (>= 2.15)
@@ -242,7 +238,7 @@ DEPENDENCIES
   web-console (>= 3.3.0)
 
 RUBY VERSION
-   ruby 2.5.3p105
+   ruby 2.4.1p111
 
 BUNDLED WITH
-   1.17.1
+   1.17.3

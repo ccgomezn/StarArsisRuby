@@ -14,7 +14,7 @@ my_external_db:
   adapter: mysql2
   hostname: box1310.bluehost.com
   encoding: utf8
-  database: stararsi_appData
+  database: stararsis
   pool: 5
   port: 3306
   username: stararsi_dataAcc
