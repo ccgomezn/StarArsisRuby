@@ -483,8 +483,8 @@ class IndexController < ApplicationController
                     obra_real = {}
                     obra_real["Nombre_grupo"] = obra.Nombre_grupo
                     obra_real["Id_grupo"] = obra.Id_grupo
-                    genero = GeneroMusical.find_by(Id_genero: obra.Id_genero) ? GeneroMusical.find_by(id: obra.Id_genero).Nombre_genero : ''
-                    tipo = TipoAgrupacion.find_by(Id_tipo_banda: obra.Id_tipo_banda) ? TipoAgrupacion.find_by(id: obra.Id_tipo_banda).Nombre_tipo_banda : ''
+                    genero = GeneroMusical.find_by(Id_genero: obra.Id_genero) ? GeneroMusical.find_by(Id_genero: obra.Id_genero).Nombre_genero : ''
+                    tipo = TipoAgrupacion.find_by(Id_tipo_banda: obra.Id_tipo_banda) ? TipoAgrupacion.find_by(Id_tipo_banda: obra.Id_tipo_banda).Nombre_tipo_banda : ''
                     obra_real["Id_genero"] = genero
                     obra_real["Id_tipo_banda"] = tipo
 
