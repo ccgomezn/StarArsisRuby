@@ -7,7 +7,7 @@ Rails.application.routes.draw do
   get 'index/liquidar_fonografico'
   get 'index/diccionario'
   get 'index/loadSong'
-  get 'index/loadAgruptation'
+  get 'index/loadAgrupation'
   get 'index/liquidar_general_autor'
   get 'index/liquidar_general_fonografico'
 
